@@ -1,0 +1,480 @@
+<%@page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
+<%@taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core"%>
+<%@taglib prefix="spring" uri="http://www.springframework.org/tags"%>
+<%@taglib prefix="dms" uri="/WEB-INF/tlds/taglibs-dms"%>
+
+ <div class="header_area">
+     <h2 class="title_basic_top"><spring:message code="sal.lbl.proformaInvoiceInfo" /></h2>
+ </div>
+
+ <div id="proformaInvc" class="box_form clfix">
+     <section class="left_areaStyle">
+         <div class="form_st02">
+             <dl>
+                 <dt><spring:message code="sal.lbl.invoiceDate" /></dt>
+                 <dd>
+                     <input id="eqryDate" class="wcnpEfctFrom" data-bind="value:eqryDate"/>
+                 </dd>
+             </dl>
+             <dl>
+                 <dt><spring:message code="sal.lbl.gSTNo" /></dt>
+                 <dd class="col2">
+                     <input type="text" id="cstNum" readonly class="form_input txt_totals" data-bind="value:cstNum"/>
+                 </dd>
+             </dl>
+             <dl>
+                 <dt><spring:message code="sal.lbl.customerName" /></dt>
+                 <dd class="col2">
+                     <input type="text" id="eqrfRgstFullName" class="form_input" maxlength="100" data-bind="value:eqrfRgstFullName"/>
+                 </dd>
+             </dl>
+             <dl>
+                 <dt><spring:message code="sal.lbl.address" /></dt>
+                 <dd class="col2">
+                     <textarea id="eqrfAddr" rows="5" cols="" class="form_textarea" data-bind="value:eqrfAddr"></textarea>
+                 </dd>
+             </dl>
+             <dl>
+                 <dt></dt>
+                 <dd class="col2">
+                     <input type="text" id="eqrfAddr2" class="form_input" maxlength="100" data-bind="value:eqrfAddr2"/>
+                 </dd>
+             </dl>
+             <dl>
+                 <dt><spring:message code="sal.lbl.for" /></dt>
+                 <dd class="col2">
+                     <div class="input_bt w58">
+                         <input type="text" id="dlrmDsctn" readonly class="form_input txt_totals" data-bind="value:dlrmDsctn"/>
+                         <button type="button" id="btnProformaInvcView" class="btn_xs k-button fr"><spring:message code="sal.lbl.preview" /></button>
+                     </div>
+                 </dd>
+             </dl>
+         </div>
+     </section>
+
+     <section class="right_areaStyle">
+         <div class="form_st02">
+             <dl>
+                 <dt></dt>
+                 <dd></dd>
+             </dl>
+             <dl>
+                 <dt></dt>
+                 <dd class="col1 ml_st02">
+                     <input type="text" value="PARTICULARS" disabled class="form_input form_inputbox ac" />
+                 </dd>
+                 <dd>
+                     <input type="text" value="AMOUNT(Rs)" disabled class="form_input form_inputbox ac" />
+                 </dd>
+             </dl>
+             <dl>
+                 <dt><spring:message code="sal.lbl.priceofOne" /></dt>
+                 <dd class="col1 ml_st02">
+                     <input type="text" id="fulldsctn" disabled class="form_input form_readonly" maxlength="100" data-bind="value:fulldsctn"/>
+                 </dd>
+                 <dd>
+                     <input id="basicPrice" class="form_numeric ar" maxlength="10" onblur="fn_sumAmt();" onfocus="fnOnfocus(this.id);" data-bind="value:basicPrice"/>
+                 </dd>
+             </dl>
+             <dl style="display:none;">
+                 <dt><spring:message code="sal.lbl.tax" /></dt>
+                  <dd class="col1 ml_st02">
+                     <input type="text" id="t1" class="form_input" maxlength="100" data-bind="value:t1"/>
+                 </dd>
+                 <dd>
+                     <input id="tax" class="form_numeric ar" maxlength="10" onblur="fn_sumAmt();" onfocus="fnOnfocus(this.id);" data-bind="value:tax"/>
+                 </dd>
+             </dl>
+             <dl>
+                 <dt>CGST</dt>
+                  <dd class="col1 ml_st02">
+                     <input type="text" id="cgstTxt" class="form_input" maxlength="100" />
+                 </dd>
+                 <dd>
+                     <input id="cgst" class="form_numeric ar" maxlength="10" onblur="fn_sumAmt();" onfocus="fnOnfocus(this.id);"/>
+                 </dd>
+             </dl>
+              <dl>
+                 <dt>SGST</dt>
+                  <dd class="col1 ml_st02">
+                     <input type="text" id="sgstTxt" class="form_input" maxlength="100" />
+                 </dd>
+                 <dd>
+                     <input id="sgst" class="form_numeric ar" maxlength="10" onblur="fn_sumAmt();" onfocus="fnOnfocus(this.id);" />
+                 </dd>
+             </dl>
+             <dl>
+                 <dt>IGST</dt>
+                  <dd class="col1 ml_st02">
+                     <input type="text" id="igstTxt" class="form_input" maxlength="100" />
+                 </dd>
+                 <dd>
+                     <input id="igst" class="form_numeric ar" maxlength="10" onblur="fn_sumAmt();" onfocus="fnOnfocus(this.id);" />
+                 </dd>
+             </dl>
+             <dl>
+                 <dt>CESS</dt>
+                  <dd class="col1 ml_st02">
+                     <input type="text" id="cessTxt" class="form_input" maxlength="100" />
+                 </dd>
+                 <dd>
+                     <input id="cess" class="form_numeric ar" maxlength="10" onblur="fn_sumAmt();" onfocus="fnOnfocus(this.id);" />
+                 </dd>
+             </dl>
+             <dl>
+                 <dt>OTHER1</dt>
+                  <dd class="col1 ml_st02">
+                     <input type="text" id="other1Txt" class="form_input" maxlength="100" />
+                 </dd>
+                 <dd>
+                     <input id="other1" class="form_numeric ar" maxlength="10" onblur="fn_sumAmt();" onfocus="fnOnfocus(this.id);" />
+                 </dd>
+             </dl>
+             <dl>
+                 <dt>OTHER2</dt>
+                  <dd class="col1 ml_st02">
+                     <input type="text" id="other2Txt" class="form_input" maxlength="100" />
+                 </dd>
+                 <dd>
+                     <input id="other2" class="form_numeric ar" maxlength="10" onblur="fn_sumAmt();" onfocus="fnOnfocus(this.id);"/>
+                 </dd>
+             </dl>
+             <dl>
+                 <dt><spring:message code="sal.lbl.otherCharges" /></dt>
+                 <dd class="col1 ml_st02">
+                     <input type="text" id="t2" class="form_input" maxlength="100" data-bind="value:t2"/>
+                 </dd>
+                 <dd>
+                     <input id="othrChrg" class="form_numeric ar" maxlength="10" onblur="fn_sumAmt();" onfocus="fnOnfocus(this.id);" data-bind="value:othrChrg"/>
+                 </dd>
+             </dl>
+             <dl>
+                 <dt><spring:message code="sal.lbl.discount" /></dt>
+                 <dd class="col1 ml_st02">
+                     <input type="text" id="t3" class="form_input" maxlength="100" data-bind="value:t3"/>
+                 </dd>
+                 <dd>
+                     <input id="discnt" class="form_numeric ar" maxlength="10" onblur="fn_sumAmt();" onfocus="fnOnfocus(this.id);" data-bind="value:discnt"/>
+                 </dd>
+             </dl>
+             <dl>
+                 <dt class="whp70 "><spring:message code="sal.lbl.total" /></dt>
+                 <dd>
+                     <input id="tamt" readonly class="form_numeric txt_totals ar" data-bind="value:tamt"/>
+                 </dd>
+             </dl>
+             <dl>
+                 <dt></dt>
+                 <dd class="col2">
+                     <input type="text" id="amtWord" readonly class="form_input txt_totals" data-bind="value:amtWord"/>
+                 </dd>
+             </dl>
+         </div>
+     </section>
+     <span style="display:none;">
+	 	 <input type="hidden" id="cstDate" data-bind="value:cstDate"/>
+	 	 <input type="hidden" id="vatNum" data-bind="value:vatNum"/>
+	 	 <input type="hidden" id="vatDate" data-bind="value:vatDate"/>
+	 	 <input type="hidden" id="dlrmPayment" data-bind="value:dlrmPayment"/>
+     </span>
+ </div>
+
+<!-- #스크립트 영역# -->
+<script type="text/javascript">
+
+
+$(document).ready(function() {
+
+	$("#eqryDate").kendoExtMaskedDatePicker({
+        format:"<dms:configValue code='dateFormat' />"
+        ,dateValidMessage:"<spring:message code='global.lbl.date' var='dateMsg' /><spring:message code='global.err.invalid' arguments='${dateMsg}' />"
+    });
+
+    $("#basicPrice").kendoExtNumericTextBox({
+        format:"n0"
+       ,decimals:0
+       ,value:0
+       ,spinners:false
+    });
+
+    $("#tax").kendoExtNumericTextBox({
+        format:"n0"
+       ,decimals:0
+       ,value:0
+       ,spinners:false
+    });
+
+    $("#cgst").kendoExtNumericTextBox({
+        format:"n0"
+       ,decimals:0
+       ,value:0
+       ,spinners:false
+    });
+
+    $("#sgst").kendoExtNumericTextBox({
+        format:"n0"
+       ,decimals:0
+       ,value:0
+       ,spinners:false
+    });
+
+    $("#igst").kendoExtNumericTextBox({
+        format:"n0"
+       ,decimals:0
+       ,value:0
+       ,spinners:false
+    });
+
+    $("#cess").kendoExtNumericTextBox({
+        format:"n0"
+       ,decimals:0
+       ,value:0
+       ,spinners:false
+    });
+
+    $("#other1").kendoExtNumericTextBox({
+        format:"n0"
+       ,decimals:0
+       ,value:0
+       ,spinners:false
+    });
+
+    $("#other2").kendoExtNumericTextBox({
+        format:"n0"
+       ,decimals:0
+       ,value:0
+       ,spinners:false
+    });
+
+    $("#othrChrg").kendoExtNumericTextBox({
+        format:"n0"
+       ,decimals:0
+       ,value:0
+       ,spinners:false
+    });
+
+    $("#discnt").kendoExtNumericTextBox({
+        format:"n0"
+       ,decimals:0
+       ,value:0
+       ,spinners:false
+    });
+
+    $("#tamt").kendoExtNumericTextBox({
+        format:"n0"
+       ,decimals:0
+       ,value:0
+       ,spinners:false
+    });
+
+	$("#btnProformaInvcView").ndmsPrintButton({
+		  url:"<c:url value='/sal/salg/customerBookingMgtProformaInvoice/selectProformaInvoiceViewPrint.json' />"
+		, paramMap:function(){
+			var param = {};
+			param.cstNum = $("#cstNum").val();
+			param.cstDate = kendo.toString(kendo.parseDate($("#cstDate").val(), "yyyyMMdd"), "dd/MM/yyyy");
+			param.vatNum = $("#vatNum").val();
+			param.vatDate = kendo.toString(kendo.parseDate($("#vatDate").val(), "yyyyMMdd"), "dd/MM/yyyy");
+			param.eqrfRgstFullName = $("#eqrfRgstFullName").val();
+			param.eqryDate = kendo.toString($("#eqryDate").data("kendoExtMaskedDatePicker").value(), "dd/MM/yyyy");
+			param.eqrfAddr = $("#eqrfAddr").val();
+			param.eqrfAddr2 = $("#eqrfAddr2").val();
+			param.dlrmDsctn = $("#dlrmDsctn").val();
+			param.fulldsctn = $("#fulldsctn").val();
+			param.basicPrice = Number($("#basicPrice").data("kendoExtNumericTextBox").value());
+			//param.t1 = $("#t1").val();
+			//param.tax = Number($("#tax").data("kendoExtNumericTextBox").value());
+			param.cgstTxt = $("#cgstTxt").val();
+			param.cgst = Number($("#cgst").data("kendoExtNumericTextBox").value());
+			param.sgstTxt = $("#sgstTxt").val();
+			param.sgst = Number($("#sgst").data("kendoExtNumericTextBox").value());
+			param.igstTxt = $("#igstTxt").val();
+			param.igst = Number($("#igst").data("kendoExtNumericTextBox").value());
+			param.cessTxt = $("#cessTxt").val();
+			param.cess = Number($("#cess").data("kendoExtNumericTextBox").value());
+			param.other1Txt = $("#other1Txt").val();
+			param.other1 = Number($("#other1").data("kendoExtNumericTextBox").value());
+			param.other2Txt = $("#other2Txt").val();
+			param.other2 = Number($("#other2").data("kendoExtNumericTextBox").value());
+			param.t2 = $("#t2").val();
+			param.othrChrg = Number($("#othrChrg").data("kendoExtNumericTextBox").value());
+			param.t3 = $("#t3").val();
+			param.discnt = Number($("#discnt").data("kendoExtNumericTextBox").value());
+			param.tamt = Number($("#tamt").data("kendoExtNumericTextBox").value());
+			param.amtWord = $("#amtWord").val();
+			param.dlrmPayment = $("#dlrmPayment").val();
+
+			console.log(param);
+
+			//return false;
+
+			return JSON.stringify(param);
+		  }
+		, reportName:"/sal/SaleProformaInvoiceView.ozr"
+		, filter:function(){
+			var enquiryNo = $("#enquiryNo").val();
+			var cstNum = $("#custNo").val();
+			if(dms.string.isEmpty(enquiryNo) || dms.string.isEmpty(cstNum)){
+				dms.notification.info("<spring:message code='ser.info.noCustExist'/>");
+				return false;
+			}
+			this.setOptions("reportName","/sal/SaleProformaInvoiceView.ozr");
+			return true;
+		}
+		, fileName:"Proforma Invoice Print"
+	});
+
+    fnOnfocus = function(id){
+        $("#"+ id +" ").select();
+    }
+});
+
+function fn_proformaInvcOnLoad(enquiryNo){
+	var sEnquiryNo = "";
+	if(typeof(enquiryNo) != "undefined"){
+		sEnquiryNo = enquiryNo;
+	}else{
+		sEnquiryNo = $("#enquiryNo").val();
+	}
+
+	dms.loading.show();
+	$.ajax({
+	       url :"<c:url value='/sal/salg/customerBookingMgtProformaInvoice/selectProformaInvoiceInfo.json' />"
+	       ,data :JSON.stringify({"sEnqryNo":sEnquiryNo})
+	       ,type :'POST'
+	       ,dataType :'json'
+	       ,contentType :'application/json'
+	       ,error :function(jqXHR,status,error) {
+	    	   dms.loading.hide();
+	           if(jqXHR.responseJSON != null && jqXHR.responseJSON.errors != null){
+	               dms.notification.error(jqXHR.responseJSON.errors[0].errorMessage);
+	           }else{
+	               dms.notification.error(error);
+	           }
+	       }
+	       ,success :function(jqXHR, textStatus) {
+	    	   dms.loading.hide();
+	    	   fn_proformaInvcBind(jqXHR["data"]);
+	       }
+	   });
+}
+
+//데이터 셋팅(더블 클릭)
+function fn_proformaInvcBind(item){
+	kendo.bind($("#proformaInvc"), item);
+	$("#cgst").data("kendoExtNumericTextBox").value(0);
+	$("#sgst").data("kendoExtNumericTextBox").value(0);
+	$("#igst").data("kendoExtNumericTextBox").value(0);
+	$("#cess").data("kendoExtNumericTextBox").value(0);
+	$("#other1").data("kendoExtNumericTextBox").value(0);
+	$("#other2").data("kendoExtNumericTextBox").value(0);
+	fn_sumAmt();
+}
+
+//초기화
+function fn_proformaInvcRefresh(){
+	salesJs.event.clearForm("proformaInvc");
+}
+
+function fn_sumAmt(){
+	var basicPrice = Number($("#basicPrice").data("kendoExtNumericTextBox").value());
+	//var tax = Number($("#tax").data("kendoExtNumericTextBox").value());
+	var tax = 0;
+	var cgst   = Number($("#cgst").data("kendoExtNumericTextBox").value());
+	var sgst   = Number($("#sgst").data("kendoExtNumericTextBox").value());
+	var igst   = Number($("#igst").data("kendoExtNumericTextBox").value());
+	var cess   = Number($("#cess").data("kendoExtNumericTextBox").value());
+	var other1 = Number($("#other1").data("kendoExtNumericTextBox").value());
+	var other2 = Number($("#other2").data("kendoExtNumericTextBox").value());
+	tax = cgst + sgst + igst + cess + other1 + other2;
+
+	var othrChrg = Number($("#othrChrg").data("kendoExtNumericTextBox").value());
+	var discnt = Number($("#discnt").data("kendoExtNumericTextBox").value());
+	var tamt = 0;
+	tamt = (basicPrice+ tax + othrChrg) - discnt;
+	var amtWord = uf_GetAllWordAMT(String(tamt));
+
+	$("#tamt").data("kendoExtNumericTextBox").value(tamt);
+	$("#amtWord").val(amtWord);
+}
+
+var G_h1=new Array("zero","One","Two","Three","Four","Five","Six","Seven","Eight","Nine","Ten","Eleven","Twelve","Thirteen","Fourteen","Fifteen","Sixteen","Seventeen","Eighteen","Nineteen");
+var G_h2=new Array("zero","Ten","Twenty","Thirty","Forty","Fifty","Sixty","Seventy","Eighty","Ninety","One Hundred");
+
+function uf_GetWordAMT(c_amt) {
+        if(c_amt == "" || c_amt == null || c_amt == "00" || c_amt == "0") return "";
+
+        var ret_val="123";
+        if(parseInt(c_amt) > 0 && parseInt(c_amt) < 20) {
+            ret_val=G_h1[parseInt(c_amt)];
+        } else {
+           var h1=c_amt.substring(0,1);
+           var h2=c_amt.substring(1);
+
+           ret_val =G_h2[parseInt(h1)];
+           if(h2 != "0") ret_val += " " + G_h1[parseInt(h2)];
+        }
+        return ret_val;
+}
+
+
+function uf_GetAllWordAMT(c_amt) {
+        if(c_amt == "" || c_amt == null) return "Rupees zero Only";
+        if(parseInt(c_amt) == 0)         return "Rupees zero Only";
+
+        var c_lng=c_amt.length;
+        var ret_val="Rupees";
+        switch( c_lng ) {
+            case 1:
+            case 2:
+                ret_val += " " + uf_GetWordAMT(c_amt);
+                break;
+
+            case 3:
+                ret_val += " " + uf_GetWordAMT(c_amt.substring(0,1)) + " Hundred";
+                if(c_amt.substring(1) != "00") ret_val += " " + uf_GetWordAMT(c_amt.substring(1));
+                break;
+
+            case 4:
+                ret_val += " " + uf_GetWordAMT(c_amt.substring(0,1)) + " Thousand";
+                if(c_amt.substring(1,2) != "0")  ret_val += " " + uf_GetWordAMT(c_amt.substring(1,2)) + " Hundred";
+                if(c_amt.substring(2)   != "00") ret_val += " " + uf_GetWordAMT(c_amt.substring(2));
+                break;
+
+            case 5:
+                ret_val += " " + uf_GetWordAMT(c_amt.substring(0,2)) + " Thousand";
+                if(c_amt.substring(2,3) != "0")  ret_val += " " + uf_GetWordAMT(c_amt.substring(2,3)) + " Hundred";
+                if(c_amt.substring(3)   != "00") ret_val += " " + uf_GetWordAMT(c_amt.substring(3));
+                break;
+
+            case 6:
+                ret_val += " " + uf_GetWordAMT(c_amt.substring(0,1)) + " Lakhs";
+                if(c_amt.substring(1,3) != "00") ret_val += " " + uf_GetWordAMT(c_amt.substring(1,3)) + " Thousand";
+                if(c_amt.substring(3,4) != "0")  ret_val += " " + uf_GetWordAMT(c_amt.substring(3,4)) + " Hundred";
+                if(c_amt.substring(4)   != "00") ret_val += " " + uf_GetWordAMT(c_amt.substring(4));
+                break;
+
+            case 7:
+                ret_val += " " + uf_GetWordAMT(c_amt.substring(0,2)) + " Lakhs";
+                if(c_amt.substring(2,4) != "00") ret_val += " " + uf_GetWordAMT(c_amt.substring(2,4)) + " Thousand";
+                if(c_amt.substring(4,5) != "0")  ret_val += " " + uf_GetWordAMT(c_amt.substring(4,5)) + " Hundred";
+                if(c_amt.substring(5)   != "00") ret_val += " " + uf_GetWordAMT(c_amt.substring(5));
+                break;
+
+            case 8:
+                ret_val += " " + uf_GetWordAMT(c_amt.substring(0,1)) + " Hundred Lakhs";
+                if(c_amt.substring(1,3) != "00") ret_val += " " + uf_GetWordAMT(c_amt.substring(1,3)) + " Lakhs";
+                if(c_amt.substring(3,5) != "00") ret_val += " " + uf_GetWordAMT(c_amt.substring(3,5)) + " Thousand";
+                if(c_amt.substring(5,6) != "0")  ret_val += " " + uf_GetWordAMT(c_amt.substring(5,6)) + " Hundred";
+                if(c_amt.substring(6)   != "00") ret_val += " " + uf_GetWordAMT(c_amt.substring(6));
+                break;
+
+            default :
+                break;
+        }
+        ret_val += " Only";
+
+        return ret_val;
+}
+
+</script>

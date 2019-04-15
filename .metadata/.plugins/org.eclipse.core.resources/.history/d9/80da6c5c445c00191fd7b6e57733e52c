@@ -1,0 +1,704 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!--
+    SQL File Name : dsNdmsNonXa-SALEInterDlrStockTransferMainDAO_sql.xml
+    Description : Variant Master
+    author : yvette.ysj
+    since : 2018. 9.12.
+    version 1.0
+    Modification Information
+       since          author              description
+    ===========    =============    ===========================
+    2018. 10.       yvette.yoon
+-->
+
+<mapper namespace="SALEInterDlrStockTransferMainDAO">
+	<!-- TOTAL COUNT 조회 -->
+
+	<sql id="vhstWhere">
+                               AND VHST.VHST_CMPN_NO	= #{ndmsCmpnNo}
+                               AND VHST.VHST_CORP_NO    = #{ndmsCorpNo}
+                               AND VHST.VHST_DLR_NO     = #{dlrNo}
+                               <if test=' sModelCd != "" and sModelCd != null ' >
+                               AND VHST.VHST_MODEL_CODE  = #{sModelCd}
+                               </if>
+                               <if test=' sVariantCode != "" and sVariantCode != null ' >
+                               AND VRNT.VRNT_GRP_DSCTN   = #{sVariantCode}
+                               </if>
+                               <if test=' sSubVariantCode != "" and sSubVariantCode != null ' >
+                               AND VHST.VHST_SEPC_CODE   = #{sSubVariantCode}
+                               </if>
+                               <if test=' sColrCd != "" and sColrCd != null ' >
+                               AND VHST.VHST_COLR_CODE   = #{sColrCd}
+                               </if>
+                               <choose>
+	                               <when test=' sChkAld != null and sChkAld != "" '>
+	                                   <if test=' sChkAld == "Y" '>
+	  	                               AND VHST.VHST_STAT = '95'
+	                                   </if>
+	  	                               <if test=' sFromDt != "" and sFromDt != null and sChkAld == "Y" ' >
+	                                   AND TO_CHAR(INVC.INVC_CRTE_DTIME,'yyyyMMdd') <![CDATA[>=]]> #{sFromDt}
+	                                   </if>
+	                                   <if test=' sToDt != "" and sToDt != null and sChkAld == "Y" ' >
+	                                   AND TO_CHAR(INVC.INVC_CRTE_DTIME,'yyyyMMdd') <![CDATA[<=]]> #{sToDt}
+	                                   </if>
+	                                   <if test=' sChkAld == "N" '>
+	  	                               AND VHST_STAT IN ='10'
+	                                   </if>
+	                               </when>
+                               </choose>
+	</sql>
+
+
+	<select id="selectSalEInterDlrStockTransferByConditionCnt" parameterType="ndmsMap" resultType="ndmsMap">
+	/* [SALEInterDlrStockTransferMainDAO.selectSalEInterDlrStockTransferByConditionCnt] */
+
+                             SELECT COUNT(VHST.VHST_VIN) AS VALUE
+                               FROM SAL_SWVHST_TB VHST
+                              INNER JOIN SAL_SSVRNT_TB VRNT
+                                 ON VHST.VHST_CMPN_NO	 = VRNT.VRNT_CMPN_NO
+                                AND VHST.VHST_CORP_NO    = VRNT.VRNT_CORP_NO
+                                AND VHST.VHST_VRNT_CODE  = VRNT.VRNT_CODE
+               	                AND VHST.VHST_SEPC_CODE  = VRNT.VRNT_SPEC_CODE
+                              LEFT OUTER JOIN SAL_STINVC_TB INVC
+                                ON INVC_CMPN_NO          = VHST.VHST_CMPN_NO
+                               AND INVC_CORP_NO          = VHST.VHST_CORP_NO
+                               AND INVC_DLR_NO           = VHST.VHST_DLR_NO
+                               AND INVC_VIN              = VHST.VHST_VIN
+                              <where>
+                              	<include refid="vhstWhere"/>
+                              </where>
+	</select>
+
+	<!-- 목록데이터를 조회한다. -->
+	<select id="selectSalEInterDlrStockTransferByCondition" parameterType="ndmsMap" resultType="ndmsMap">
+	/* [SALEInterDlrStockTransferMainDAO.selectSalEInterDlrStockTransferByCondition] */
+
+	        SELECT * FROM (
+			        SELECT ROWNUM AS RNUM, T1.*
+					  FROM (
+
+                          SELECT
+                                 VHST.VHST_VIN                                   AS VIN_NO
+                               , VHST.VHST_OTHR_DLR_NO                           AS TRANS_DLR_NO
+                               , VHST.VHST_MNGER_RMRKS                           AS MNGER_RMRKS
+                               , VHST.VHST_MODEL_CODE                            AS MODEL_CODE
+                               , (
+                                  SELECT MODL_FULL_DSCTN
+                                    FROM SAL_SSMODL_TB
+                                   WHERE MODL_CMPN_NO    = VHST.VHST_CMPN_NO
+                                     AND MODL_CORP_NO    = VHST.VHST_CORP_NO
+                                     AND MODL_MODEL_CODE = VHST.VHST_MODEL_CODE
+
+                                 )                                               AS MODEL_NAME
+                               , VHST.VHST_VRNT_CODE                             AS VRNT_CODE
+                               , VRNT.VRNT_DSCTN                                 AS VRNT_NAME
+                               , VHST.VHST_SEPC_CODE                             AS SUB_VRNT_CODE
+                               , VRNT.VRNT_DSCTN                                 AS SUB_VRNT_NAME
+                               , VHST.VHST_COLR_CODE                             AS COLR_CODE
+                               , (
+                                  SELECT COLR_FULL_DSCTN
+                                    FROM SAL_SSCOLR_TB
+                                    WHERE COLR_CMPN_NO  = VHST.VHST_CMPN_NO
+                                      AND COLR_CORP_NO  = VHST.VHST_CORP_NO
+                                      AND COLR_CODE     = VHST.VHST_COLR_CODE
+                                 )                                               AS COLR_NAME
+                               , (
+                                  SELECT STLC_DSCTN
+                                    FROM SAL_SSSTLC_TB
+                                   WHERE STLC_CMPN_NO   = VHST.VHST_CMPN_NO
+                                     AND STLC_CORP_NO   = VHST.VHST_CORP_NO
+                                     AND STLC_DLR_NO    = VHST.VHST_DLR_NO
+                                     AND STLC_CODE      = VHST.VHST_STORE_CODE
+                                 )                                               AS STLC_DSCTN
+                               , VHST.VHST_STORE_CODE                            AS STORE_CODE
+                               , VHST.VHST_STAT                                  AS VHST_STAT
+                               , VHST.VHST_MNGER_RMRKS                           AS REMARKS
+                               , INVC.INVC_NO                                    AS INVC_NO
+                               , TO_DATE(INVC.INVC_DATE ,'yyyyMMdd')             AS INVC_DATE
+                             FROM SAL_SWVHST_TB VHST
+                            INNER JOIN SAL_SSVRNT_TB VRNT
+                               ON VHST.VHST_CMPN_NO	   = VRNT.VRNT_CMPN_NO
+                              AND VHST.VHST_CORP_NO    = VRNT.VRNT_CORP_NO
+                              AND VHST.VHST_VRNT_CODE  = VRNT.VRNT_CODE
+                              AND VHST.VHST_SEPC_CODE  = VRNT.VRNT_SPEC_CODE
+                            LEFT OUTER JOIN SAL_STINVC_TB INVC
+                              ON INVC_CMPN_NO          = VHST.VHST_CMPN_NO
+                             AND INVC_CORP_NO          = VHST.VHST_CORP_NO
+                             AND INVC_DLR_NO           = VHST.VHST_DLR_NO
+                             AND INVC_VIN              = VHST.VHST_VIN
+                            <where>
+                            	<include refid="vhstWhere"/>
+                            </where>
+					 ) T1
+			  <where>
+				 <if test='firstIndex != -1 and lastIndex != -1'>
+					 ROWNUM <![CDATA[<=]]> #{lastIndex}
+				 </if>
+			  </where>
+	    )
+	    <where>
+          <if test='firstIndex != -1 and lastIndex != -1'>
+             RNUM > #{firstIndex}
+          </if>
+		</where>
+	</select>
+
+
+	<!-- selectSalEInterDealerList -->
+	<select id="selectSalEInterDealerList" parameterType="ndmsMap" resultType="ndmsMap">
+	/* [SALEInterDlrStockTransferMainDAO.selectSalEInterDealerList] */
+        SELECT TO_DLR_NO
+		     , TO_DLR_NAME
+		     , CASE WHEN DLRM_GRP_DLR_CODE = SELF_GRP_DLR_CODE
+		            THEN 'G' ELSE 'O' END AS INDICTOR
+		     , TO_DLR_CODE
+		  FROM (
+			  SELECT DLRM.DLRM_DLR_NO                                           AS TO_DLR_NO
+			       , DLRM.DLRM_DLR_CODE 								        AS TO_DLR_CODE
+			       , DLRM.DLRM_DLR_CODE || ' ' || DLRM.DLRM_DLR_DSCTN           AS TO_DLR_NAME
+			       , DLRM.DLRM_GRP_DLR_CODE
+			       , (
+			          SELECT
+			                DLRM_GRP_DLR_CODE AS SELF_GRP_DLR_CODE
+			            FROM CMM_CADLRM_TB A INNER JOIN CMM_CADORG_TB B
+			              ON A.DLRM_CMPN_NO   = B.DORG_CMPN_NO
+			             AND A.DLRM_CORP_NO   = B.DORG_CORP_NO
+			             AND A.DLRM_DLR_NO    = B.DORG_DLR_NO
+			           WHERE B.DORG_CMPN_NO   = DORG.DORG_CMPN_NO
+			             AND B.DORG_CORP_NO   = DORG.DORG_CORP_NO
+			             AND B.DORG_DLR_NO    = #{dlrNo}
+			             AND B.DORG_SCTN_TYPE = DORG.DORG_SCTN_TYPE
+			         )                                                                 AS SELF_GRP_DLR_CODE
+			    FROM CMM_CADLRM_TB DLRM
+			   INNER JOIN CMM_CADORG_TB DORG
+			      ON DLRM.DLRM_DLR_NO          = DORG.DORG_DLR_NO
+			     AND DLRM.DLRM_CMPN_NO         = DORG.DORG_CMPN_NO
+			     AND DLRM.DLRM_CORP_NO         = DORG.DORG_CORP_NO
+			   WHERE DLRM.DLRM_CMPN_NO         = #{ndmsCmpnNo}
+			     AND DLRM.DLRM_CORP_NO         = #{ndmsCorpNo}
+			     AND DORG.DORG_SCTN_TYPE       = 'S' 				-- Sales
+			     AND (NVL(TRIM (DORG.DORG_STATUS), 'A') = 'A' AND NVL(TRIM (DORG.DORG_ORDER_BLOCK), 'A') = 'A')
+			     AND DLRM_DLR_NO !=  #{ndmsCorpNo}
+			     AND DLRM_SPR_DLR_CODE NOT IN('S1100','N1100','E1100','W1100') -- HMP DEALER
+			)
+		ORDER BY TO_DLR_NO
+	</select>
+
+	<select id="selectSalETaxInvoicingPrintDot" parameterType="ndmsMap" resultType="ndmsMap">
+	/* [SALEInterDlrStockTransferMainDAO.selectSalETaxInvoicingPrintDot] */
+
+		SELECT
+			T1.DORG_ORG_DSCTN                       AS DEALER_FULL_NAME,
+			T1.DORG_LST_NUM                         AS VAT_NUM,
+			T1.DORG_ADDR1 || ' ' || T1.DORG_ADDR2  AS ADDRESS,
+			T1.DORG_ADDR3                           AS ADDRESS2,
+			DECODE(LENGTH(T1.DORG_LST_DATE) ,8 ,  TO_CHAR(TO_DATE(T1.DORG_LST_DATE,'YYYYMMDD'),'dd/mm/yyyy')  , T1.DORG_LST_DATE) AS  VAT_DATE,
+			#{invcNo}                               AS INVC_NO,
+			#{modelName} || ' ' || #{vrntName} || ' ' || #{colrName} AS FULLDSCTN,
+			T3.VHST_VIN,
+			T3.VHST_CHSS_NO,
+			T3.VHST_ENGN_MODEL || T3.VHST_ENGN_SEQ AS VHST_ENGN_SEQ,
+			T3.VHST_KEY_NO,
+			T3.VHST_HSN_NO,
+			T1.DORG_GST_NO                          AS FROM_DLR_GST,
+			T2.DORG_GST_NO                          AS TO_DLR_GST
+		FROM CMM_CADORG_TB T1
+	    LEFT OUTER JOIN SAL_SWVHST_TB T3
+		  ON T1.DORG_CMPN_NO     = T3.VHST_CMPN_NO
+		 AND T1.DORG_CORP_NO     = T3.VHST_CORP_NO
+		 AND T1.DORG_DLR_NO      = T3.VHST_DLR_NO
+		 AND T3.VHST_VIN         = #{vinNo}
+		 AND T3.VHST_STAT        = '95'
+		LEFT OUTER JOIN CMM_CADORG_TB T2
+		  ON T1.DORG_CMPN_NO     = T2.DORG_CMPN_NO
+		 AND T1.DORG_CORP_NO     = T2.DORG_CORP_NO
+		 AND T1.DORG_SCTN_TYPE   = T2.DORG_SCTN_TYPE
+		 AND T3.VHST_OTHR_DLR_NO = T2.DORG_DLR_NO
+		WHERE T1.DORG_CMPN_NO    = #{ndmsCmpnNo}
+	  	  AND T1.DORG_CORP_NO    = #{ndmsCorpNo}
+		  AND T1.DORG_DLR_NO     = #{dlrNo}
+		  AND T1.DORG_SCTN_TYPE = 'S'
+	</select>
+
+    <select id="selectSalETransferSWVHSTList" parameterType="ndmsMap" resultType="ndmsMap">
+        /* [SALEInterDlrStockTransferMainDAO.selectSalETransferSWVHSTList] */
+        SELECT VHST_DLR_NO,
+		       VHST_VIN,
+		       VHST_CORP_NO,
+		       VHST_CMPN_NO,
+		       VHST_MODEL_CODE,
+		       VHST_VRNT_CODE,
+		       VHST_PIS_NO,
+		       VHST_DLR_GRN_NO,
+		       VHST_DLR_GRN_DATE,
+		       VHST_STORE_CODE,
+		       VHST_MNGER_RMRKS,
+		       VHST_RCVE_DATE,
+		       VHST_SEPC_CODE,
+		       VHST_COLR_CODE,
+		       VHST_LEAD_TYPE,
+		       VHST_ENGN_MODEL,
+		       VHST_ENGN_SEQ,
+		       VHST_KEY_NO,
+		       VHST_INVC_DTAE,
+		       VHST_HMI_INVC_NO,
+		       VHST_TRUCK_NO,
+		       VHST_TRNTR_NAME,
+		       VHST_PMNT_TYPE,
+		       VHST_FNCER_NAME,
+		       VHST_OCN,
+		       VHST_CHSS_NO,
+		       VHST_HMIL_ORD_NO,
+		       VHST_HMIL_ORD_DATE,
+		       VHST_TRNTR_MODE,
+		       VHST_HMI_GRN_NO,
+		       VHST_INVC_AMT,
+		       VHST_STAT,
+		       VHST_CRTE_DTIME,
+		       VHST_CRTE_EMP_NO,
+		       VHST_UPDT_DTIME,
+		       VHST_UPDT_EMP_NO,
+		       VHST_MOLDE_YEAR,
+		       VHST_SIGN_OFF_DATE,
+		       VHST_INVC_CNCL_DATE,
+		       VHST_DPRT_DATE,
+		       VHST_DMGE_STAT,
+		       VHST_OTHR_DLR_NO,
+		       VHST_MODL_NO,
+		       VHST_BODY_SRL,
+		       VHST_USE_TYPE,
+		       VHST_ORD_TYPE,
+		       VHST_MNTH_CODE,
+		       VHST_BODY_MNTH,
+		       VHST_DEALLOCATION_YN,
+		       VHST_TD_FLAG,
+		       VHST_HSN_NO
+		  FROM SAL_SWVHST_TB
+		 WHERE VHST_CMPN_NO  = #{ndmsCmpnNo}
+		   AND VHST_CORP_NO  = #{ndmsCorpNo}
+		   AND VHST_DLR_NO   = #{dlrNo}   -- ## 검색시에는 로그인한 Dealer
+		   AND VHST_VIN      = #{vinNo}
+    </select>
+
+    <select id="selectSapStatus" parameterType="ndmsMap" resultType="ndmsMap">
+        /* [SALEInterDlrStockTransferMainDAO.selectSapStatus] */
+         SELECT PSTA_STATUS AS SAP_STAT
+           FROM SAL_SAPSTA_TB
+          WHERE PSTA_CMPN_NO = #{ndmsCmpnNo}
+            AND PSTA_CORP_NO = #{ndmsCorpNo}
+    </select>
+
+    <insert id="insertSalETransferToDlrInfoSWVHST" parameterType="ndmsMap">
+      /* [SALEInterDlrStockTransferMainDAO.insertSalETransferToDlrInfoSWVHST] */
+
+
+                  INSERT INTO SAL_SWVHST_TB(
+                          VHST_CMPN_NO
+                         ,VHST_CORP_NO
+                         ,VHST_DLR_NO
+                         ,VHST_VIN
+                         ,VHST_STAT
+                         ,VHST_OTHR_DLR_NO
+                         ,VHST_MNGER_RMRKS
+                         ,VHST_MODEL_CODE
+                         ,VHST_VRNT_CODE
+                         ,VHST_PIS_NO
+                         ,VHST_DLR_GRN_NO
+                         ,VHST_DLR_GRN_DATE
+                         ,VHST_SEPC_CODE
+                         ,VHST_COLR_CODE
+                         ,VHST_LEAD_TYPE
+                         ,VHST_ENGN_MODEL
+                         ,VHST_ENGN_SEQ
+                         ,VHST_KEY_NO
+                         ,VHST_INVC_DTAE
+                         ,VHST_HMI_INVC_NO
+                         ,VHST_TRUCK_NO
+                         ,VHST_TRNTR_NAME
+                         ,VHST_PMNT_TYPE
+                         ,VHST_FNCER_NAME
+                         ,VHST_OCN
+                         ,VHST_CHSS_NO
+                         ,VHST_HMIL_ORD_NO
+                         ,VHST_HMIL_ORD_DATE
+                         ,VHST_TRNTR_MODE
+                         ,VHST_HMI_GRN_NO
+                         ,VHST_INVC_AMT
+                         ,VHST_MOLDE_YEAR
+                         ,VHST_SIGN_OFF_DATE
+                         ,VHST_INVC_CNCL_DATE
+                         ,VHST_DPRT_DATE
+                         ,VHST_DMGE_STAT
+                         ,VHST_MODL_NO
+                         ,VHST_BODY_SRL
+                         ,VHST_USE_TYPE
+                         ,VHST_ORD_TYPE
+                         ,VHST_MNTH_CODE
+                         ,VHST_BODY_MNTH
+                         ,VHST_HSN_NO
+                         ,VHST_STORE_CODE
+                         ,VHST_RCVE_DATE
+                         ,VHST_EX_INVC_NO
+						 ,VHST_ACCESS_VAL
+						 ,VHST_IGST_TAX
+						 ,VHST_CGST_TAX
+						 ,VHST_SGST_TAX
+						 ,VHST_COMP_CESS
+						 ,VHST_INT_COLOR_CODE
+						 ,VHST_TDC_USE_YN
+                         ,VHST_CRTE_DTIME
+                         ,VHST_CRTE_EMP_NO
+                         ,VHST_UPDT_DTIME
+                         ,VHST_UPDT_EMP_NO
+                    )
+                    SELECT
+                          VHST_CMPN_NO
+                         ,VHST_CORP_NO
+                         ,#{transDlrNo} AS VHST_DLR_NO
+                         ,VHST_VIN
+                         ,'90'           AS VHST_STAT
+                         ,''             AS VHST_OTHR_DLR_NO
+                         ,''             AS VHST_MNGER_RMRKS
+                         ,VHST_MODEL_CODE
+                         ,VHST_VRNT_CODE
+                         ,VHST_PIS_NO
+                         ,VHST_DLR_GRN_NO
+                         ,VHST_DLR_GRN_DATE
+                         ,VHST_SEPC_CODE
+                         ,VHST_COLR_CODE
+                         ,VHST_LEAD_TYPE
+                         ,VHST_ENGN_MODEL
+                         ,VHST_ENGN_SEQ
+                         ,VHST_KEY_NO
+                         ,VHST_INVC_DTAE
+                         ,VHST_HMI_INVC_NO
+                         ,VHST_TRUCK_NO
+                         ,VHST_TRNTR_NAME
+                         ,VHST_PMNT_TYPE
+                         ,VHST_FNCER_NAME
+                         ,VHST_OCN
+                         ,VHST_CHSS_NO
+                         ,VHST_HMIL_ORD_NO
+                         ,VHST_HMIL_ORD_DATE
+                         ,VHST_TRNTR_MODE
+                         ,VHST_HMI_GRN_NO
+                         ,VHST_INVC_AMT
+                         ,VHST_MOLDE_YEAR
+                         ,VHST_SIGN_OFF_DATE
+                         ,VHST_INVC_CNCL_DATE
+                         ,VHST_DPRT_DATE
+                         ,VHST_DMGE_STAT
+                         ,VHST_MODL_NO
+                         ,VHST_BODY_SRL
+                         ,VHST_USE_TYPE
+                         ,VHST_ORD_TYPE
+                         ,VHST_MNTH_CODE
+                         ,VHST_BODY_MNTH
+                         ,VHST_HSN_NO
+                         , ''              AS VHST_STORE_CODE
+                         , ''              AS VHST_RCVE_DATE
+                         ,VHST_EX_INVC_NO
+						 ,VHST_ACCESS_VAL
+						 ,VHST_IGST_TAX
+						 ,VHST_CGST_TAX
+						 ,VHST_SGST_TAX
+						 ,VHST_COMP_CESS
+						 ,VHST_INT_COLOR_CODE
+						 ,VHST_TDC_USE_YN
+                         ,SYSDATE
+                         ,#{crdtEmpNo}     AS VHST_CRTE_EMP_NO
+                         ,SYSDATE
+                         ,#{crdtEmpNo}     AS VHST_UPDT_EMP_NO
+                     FROM SAL_SWVHST_TB
+                    WHERE VHST_CMPN_NO = #{ndmsCmpnNo}
+                      AND VHST_CORP_NO = #{ndmsCorpNo}
+                      AND VHST_DLR_NO  = #{dlrNo}
+                      AND VHST_VIN     = #{vinNo}
+
+
+    </insert>
+
+    <update id="updateSalETransferFromDlrInfoSWVHST" parameterType="ndmsMap">
+       /* [SALEInterDlrStockTransferMainDAO.updateSalETransferFromDlrInfoSWVHST] */
+       UPDATE  SAL_SWVHST_TB    --
+		  SET
+		        VHST_OTHR_DLR_NO     = #{transDlrNo}        --VHST_OTHR_DLR_NO
+		        <if test=' mngerRmrks != null and mngerRmrks="" '>
+		       ,VHST_MNGER_RMRKS     = #{mngerRmrks}         --VHST_MNGER_RMRKS
+		        </if>
+		       ,VHST_UPDT_DTIME      = SYSDATE               --VHST_UPDT_DTIME
+		       ,VHST_UPDT_EMP_NO     = #{updtEmpNo}          --VHST_UPDT_EMP_NO
+		       ,VHST_STAT            = '95'                  --VHST_STAT
+		 WHERE 1 = 1
+		   AND VHST_CMPN_NO          = #{ndmsCmpnNo}
+		   AND VHST_CORP_NO          = #{ndmsCorpNo}
+		   AND VHST_DLR_NO           = #{dlrNo}
+		   AND VHST_VIN              = #{vinNo}
+    </update>
+    <!-- // SAL_SWVHST_TB 관리 -->
+
+    <insert id="insertSalETransferSDinvcSameFromDealer" parameterType="ndmsMap">
+      /* [SALEInterDlrStockTransferMainDAO.insertSalETransferSDinvcSameFromDealer] */
+
+      <selectKey resultType="string" keyProperty="invcNo" order="BEFORE">
+
+                SELECT CASE WHEN TO_NUMBER(TO_CHAR(SYSDATE,'MM')) >= 4
+                            THEN 'D' || TO_CHAR(SYSDATE,'YYYY') || LPAD(NVL(MAX(SUBSTR(INVC_NO,6,10)),1)+1 ,5,'0')
+                            ELSE 'D' || TO_CHAR(ADD_MONTHS(SYSDATE,-12) ,'YYYY') || LPAD(NVL(MAX(SUBSTR(INVC_NO,6,10)),1)+1 ,5,'0')
+                            END  AS INVC_NO
+                  FROM SAL_SDINVC_TB
+                 WHERE INVC_CMPN_NO = #{ndmsCmpnNo}
+                   AND INVC_CORP_NO = #{ndmsCorpNo}
+                   AND INVC_DLR_NO  = #{dlrNo}
+                   AND NVL(SUBSTR(INVC_NO,2,4),0) = (CASE WHEN TO_NUMBER(TO_CHAR(SYSDATE,'MM')) <![CDATA[<]]>  4
+                                                         THEN (TO_NUMBER(TO_CHAR(SYSDATE,'YYYY')) -1)  ||''
+                                                         ELSE  TO_CHAR(SYSDATE,'YYYY')
+                                                         END
+                                                     )
+        </selectKey>
+
+             INSERT INTO SAL_SDINVC_TB    --
+             (
+               INVC_CMPN_NO            --INVC_CMPN_NO
+              ,INVC_CORP_NO            --INVC_CORP_NO
+              ,INVC_DLR_NO             --INVC_DLR_NO
+              ,INVC_NO                 --INVC_NO
+              ,INVC_DATE               --INVC_DATE
+              ,INVC_VIN                --INVC_VIN
+              ,INVC_CRTE_DTIME         --INVC_CRTE_DTIME
+              ,INVC_CRTE_EMP_NO        --INVC_CRTE_EMP_NO
+              ,INVC_UPDT_DTIME         --INVC_UPDT_DTIME
+              ,INVC_UPDT_EMP_NO        --INVC_UPDT_EMP_NO
+             )
+             VALUES
+             (
+               #{ndmsCmpnNo}             --INVC_CMPN_NO
+              ,#{ndmsCorpNo}             --INVC_CORP_NO
+              ,#{dlrNo}                  --INVC_DLR_NO
+              ,#{invcNo}                 --INVC_NO
+              ,TO_CHAR(SYSDATE,'yyyyMMdd') --INVC_DATE
+              ,#{vinNo}                  --INVC_VIN
+              ,SYSDATE                   --INVC_CRTE_DTIME
+              ,#{crdtEmpNo}              --INVC_CRTE_EMP_NO
+              ,SYSDATE                   --INVC_UPDT_DTIME
+              ,#{updtEmpNo}              --INVC_UPDT_EMP_NO
+             )
+    </insert>
+
+    <insert id="insertSalETransferSRinvcSameToDealer" parameterType="ndmsMap">
+      /* [SALEInterDlrStockTransferMainDAO.insertSalETransferSRinvcSameToDealer] */
+
+
+        <selectKey resultType="string" keyProperty="invcNo" order="BEFORE">
+
+                SELECT CASE WHEN TO_NUMBER(TO_CHAR(SYSDATE,'MM')) >= 4
+                            THEN 'R' || TO_CHAR(SYSDATE,'YYYY') || LPAD(NVL(MAX(SUBSTR(INVC_NO,6,10)),1)+1 ,5,'0')
+                            ELSE 'R' || TO_CHAR(ADD_MONTHS(SYSDATE,-12) ,'YYYY') || LPAD(NVL(MAX(SUBSTR(INVC_NO,6,10)),1)+1 ,5,'0')
+                            END  AS INVC_NO
+                  FROM SAL_SRINVC_TB
+                 WHERE INVC_CMPN_NO = #{ndmsCmpnNo}
+                   AND INVC_CORP_NO = #{ndmsCorpNo}
+                   AND INVC_DLR_NO  = #{toDlrCode}
+                   AND NVL(SUBSTR(INVC_NO,2,4),0) = (CASE WHEN TO_NUMBER(TO_CHAR(SYSDATE,'MM')) <![CDATA[<]]>  4
+                                                         THEN (TO_NUMBER(TO_CHAR(SYSDATE,'YYYY')) -1)  ||''
+                                                         ELSE  TO_CHAR(SYSDATE,'YYYY')
+                                                         END
+                                                     )
+        </selectKey>
+
+
+           INSERT INTO SAL_SRINVC_TB    --
+           (
+             INVC_CMPN_NO            --INVC_CMPN_NO
+            ,INVC_CORP_NO            --INVC_CORP_NO
+            ,INVC_DLR_NO             --INVC_DLR_NO
+            ,INVC_NO                 --INVC_NO
+            ,INVC_DATE               --INVC_DATE
+            ,INVC_VIN                --INVC_VIN
+            ,INVC_CRTE_DTIME         --INVC_CRTE_DTIME
+            ,INVC_CRTE_EMP_NO        --INVC_CRTE_EMP_NO
+            ,INVC_UPDT_DTIME         --INVC_UPDT_DTIME
+            ,INVC_UPDT_EMP_NO        --INVC_UPDT_EMP_NO
+           )
+           VALUES
+           (
+             #{ndmsCmpnNo}             --INVC_CMPN_NO
+            ,#{ndmsCorpNo}             --INVC_CORP_NO
+            ,#{toDlrCode}              --INVC_DLR_NO
+            ,#{invcNo}                 --INVC_NO
+            ,TO_CHAR(SYSDATE ,'yyyyMMdd') --INVC_DATE
+            ,#{vinNo}                  --INVC_VIN
+            ,SYSDATE                   --INVC_CRTE_DTIME
+            ,#{crdtEmpNo}              --INVC_CRTE_EMP_NO
+            ,SYSDATE                   --INVC_UPDT_DTIME
+            ,#{updtEmpNo}              --INVC_UPDT_EMP_NO
+           )
+    </insert>
+
+    <insert id="insertSalETransferSTinvcOtherDealer" parameterType="ndmsMap">
+      /* [SALEInterDlrStockTransferMainDAO.insertSalETransferSTinvcOtherDealer] */
+
+
+        <selectKey resultType="string" keyProperty="invcNo" order="BEFORE">
+
+
+             SELECT CASE WHEN TO_NUMBER(TO_CHAR(SYSDATE,'MM')) >= 4
+                         THEN 'T' || TO_CHAR(SYSDATE,'YYYY') || LPAD(MAX(NVL(INVC_NO,0))+1, 5,'0')
+                         ELSE 'T' || TO_CHAR(ADD_MONTHS(SYSDATE,-12) ,'YYYY') || LPAD(MAX(NVL(INVC_NO,0))+1, 5,'0')
+                         END  AS INVC_NO
+               FROM (
+             SELECT  MAX(NVL(SUBSTR(INVC_NO,6,10),0))  AS INVC_NO
+              FROM SAL_SWINVC_TB
+             WHERE INVC_CMPN_NO  = #{ndmsCmpnNo}
+               AND INVC_CORP_NO  = #{ndmsCorpNo}
+               AND INVC_DLR_NO   = #{dlrNo}
+               AND SUBSTR(INVC_NO,1,1) = 'T'
+               AND NVL(SUBSTR(INVC_NO,2,4),0) = (CASE WHEN TO_NUMBER(TO_CHAR(SYSDATE,'MM')) <![CDATA[<]]>  4
+                                                        THEN (TO_NUMBER(TO_CHAR(SYSDATE,'YYYY')) -1)  ||''
+                                                        ELSE  TO_CHAR(SYSDATE,'YYYY')
+                                                        END
+                                                  )
+              UNION ALL
+               SELECT  MAX(NVL(SUBSTR(INVC_NO,6,10),0))  AS INVC_NO
+                FROM SAL_STINVC_TB
+               WHERE INVC_CMPN_NO   = #{ndmsCmpnNo}
+                 AND INVC_CORP_NO   = #{ndmsCorpNo}
+                 AND INVC_DLR_NO    = #{dlrNo}
+                 AND NVL(SUBSTR(INVC_NO,2,4),0) = (CASE WHEN TO_NUMBER(TO_CHAR(SYSDATE,'MM')) <![CDATA[<]]>  4
+                                                        THEN (TO_NUMBER(TO_CHAR(SYSDATE,'YYYY')) -1)  ||''
+                                                        ELSE  TO_CHAR(SYSDATE,'YYYY')
+                                                        END
+                                                  )
+             )
+        </selectKey>
+
+           INSERT INTO SAL_STINVC_TB    --
+           (
+             INVC_CMPN_NO            --INVC_CMPN_NO
+            ,INVC_CORP_NO            --INVC_CORP_NO
+            ,INVC_DLR_NO             --INVC_DLR_NO
+            ,INVC_NO                 --INVC_NO
+            ,INVC_DATE               --INVC_DATE
+            ,INVC_VIN                --INVC_VIN
+            ,INVC_CRTE_DTIME         --INVC_CRTE_DTIME
+            ,INVC_CRTE_EMP_NO        --INVC_CRTE_EMP_NO
+            ,INVC_UPDT_DTIME         --INVC_UPDT_DTIME
+            ,INVC_UPDT_EMP_NO        --INVC_UPDT_EMP_NO
+           )
+           VALUES
+           (
+             #{ndmsCmpnNo}           --INVC_CMPN_NO
+            ,#{ndmsCorpNo}           --INVC_CORP_NO
+            ,#{dlrNo}                --INVC_DLR_NO
+            ,#{invcNo}               --INVC_NO
+            ,TO_CHAR(SYSDATE ,'yyyyMMdd') --INVC_DATE
+            ,#{vinNo}                --INVC_VIN
+            ,SYSDATE                 --INVC_CRTE_DTIME
+            ,#{crdtEmpNo}            --INVC_CRTE_EMP_NO
+            ,SYSDATE                 --INVC_UPDT_DTIME
+            ,#{updtEmpNo}            --INVC_UPDT_EMP_NO
+           )
+
+    </insert>
+
+
+    <insert id="insertStockTransferDMS" parameterType="ndmsMap">
+      /* [SALEInterDlrStockTransferMainDAO.insertStockTransferDMS] */
+
+           INSERT INTO SAL_STTRANS_IS    --
+           (
+              VIN
+            , FDELR
+            , TDELR
+            , USR
+            , SAPLINK
+            , IFRESULT
+           )
+           VALUES
+           (
+             #{vinNo}
+            ,#{dlrNo}
+            ,#{toDlrCode}
+            ,#{usrId}
+            ,'N'
+            ,'I'
+           )
+
+    </insert>
+
+    <!-- CMM VIN MASTER : CMM_CAVINM_TB 관리 -->
+    <update id="updateSalETransferVinMaster" parameterType="ndmsMap">
+     /* [SALEInterDlrStockTransferMainDAO.updateSalETransferVinMaster] */
+        UPDATE CMM_CAVINM_TB
+		  SET
+ 		       VINM_VHCL_STAT          = '90'              --VINM_VHCL_STAT
+		     , VINM_UPDT_DTIME         = SYSDATE           --VINM_UPDT_DTIME
+		     , VINM_UPDT_EMP_NO        = #{updtEmpNo}      --VINM_UPDT_EMP_NO
+		 WHERE 1 = 1
+		   AND VINM_CMPN_NO            = #{ndmsCmpnNo}     --VINM_CMPN_NO
+		   AND VINM_CORP_NO            = #{ndmsCorpNo}     --VINM_CORP_NO
+		   AND VINM_VIN                = #{vinNo}          --VINM_VIN
+    </update>
+
+	<select id="selectSalEExtColorSearch" parameterType="ndmsMap" resultType="ndmsMap">
+	/* [SALEInterDlrStockTransferMainDAO.selectSalEExtColorSearch] */
+	    SELECT A.COLR_CODE AS EXT_COLR_CODE
+	         , A.COLR_FULL_DSCTN AS EXT_COLR_NAME
+	         , B.CCMP_MODEL_CODE AS MODEL_CODE
+	      FROM SAL_SSCOLR_TB A		/* 외색 칼라 */
+	         , SAL_SICCMP_TB B		/* 모델-칼라 */
+	         , SAL_SSCLFM_TB C		/* 칼라-패밀리 */
+	    WHERE 1=1
+	    AND A.COLR_CORP_NO = B.CCMP_CORP_NO
+	    AND A.COLR_CMPN_NO = B.CCMP_CMPN_NO
+	    AND A.COLR_CODE    = B.CCMP_COLR_CODE
+
+	    AND B.CCMP_CMPN_NO = C.CLFM_CMPN_NO
+	    AND B.CCMP_CORP_NO = C.CLFM_CORP_NO
+	    AND TRIM(B.CCMP_COLR_CODE) = TRIM(C.CLFM_EXT_COLR)
+	    AND B.CCMP_MODEL_CODE = C.CLFM_CAR_LINE
+
+	    AND B.CCMP_CMPN_NO          = #{ndmsCmpnNo}
+	    AND B.CCMP_CORP_NO          = #{ndmsCorpNo}
+	    AND A.COLR_STAT             = 'Y'
+	    AND B.CCMP_MODEL_CODE       = #{sModelCd}
+	    AND TRIM(C.CLFM_COLR_FAMILY) = (
+	                                     SELECT VRNT_CLR_FAMILY
+	                                       FROM SAL_SSVRNT_TB
+	                                      WHERE VRNT_GRP_DSCTN = #{sGrpVrntCd}
+	                                      	AND VRNT_SPEC_CODE= #{sSpecCd}
+	                                   )
+	    ORDER BY A.COLR_FULL_DSCTN
+	</select>	
+	
+	<update id="updateFromdlrInfoForASMReq" parameterType="ndmsMap">
+       /* [SALEInterDlrStockTransferMainDAO.updateFromdlrInfoForASMReq] */
+       UPDATE  SAL_SWVHST_TB    --
+		  SET
+		        VHST_OTHR_DLR_NO     = #{transDlrNo}        --VHST_OTHR_DLR_NO
+		        <if test=' mngerRmrks != null and mngerRmrks="" '>
+		       ,VHST_MNGER_RMRKS     = #{mngerRmrks}         --VHST_MNGER_RMRKS
+		        </if>
+		       ,VHST_UPDT_DTIME      = SYSDATE               --VHST_UPDT_DTIME
+		       ,VHST_UPDT_EMP_NO     = #{updtEmpNo}          --VHST_UPDT_EMP_NO
+		       ,VHST_STAT            = '11'                  --VHST_STAT
+		 WHERE 1 = 1
+		   AND VHST_CMPN_NO          = #{ndmsCmpnNo}
+		   AND VHST_CORP_NO          = #{ndmsCorpNo}
+		   AND VHST_DLR_NO           = #{dlrNo}
+		   AND VHST_VIN              = #{vinNo}
+    </update>
+    
+    <update id="updateRequestCancleByDLR" parameterType="ndmsMap">
+       /* [SALEInterDlrStockTransferMainDAO.updateRequestCancleByDLR] */
+       UPDATE  SAL_SWVHST_TB    --
+		  SET		        
+		        <if test=' mngerRmrks != null and mngerRmrks="" '>
+		       	VHST_MNGER_RMRKS     = #{mngerRmrks}         --VHST_MNGER_RMRKS
+		        </if>		       
+		       ,VHST_STAT            = '10'                  --VHST_STAT
+		 WHERE 1 = 1		   		   
+		   AND VHST_VIN              = #{vinNo}
+    </update>
+</mapper>

@@ -1,0 +1,289 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!--
+    SQL File Name : CRMFOutboundCAllDAO.xml
+    Description : Outbound CAll Master
+    author sjyoon.yvette
+    since 2018. 8. 22.
+    version 1.0
+    Modification Information
+       since          author              description
+    ===========    =============    ===========================
+    2018. 8. 22.   sjyoon.yvette    
+-->
+
+<mapper namespace="CRMFHMISalesCallCenterDAO">
+
+	<select id="selectHMIsalesCallCenterMainListCnt" parameterType="ndmsMap" resultType="Integer">
+	/* [CRMFHMIsalesCallCenterDAO.selectHMIsalesCallCenterMainListCnt] **/
+	SELECT * FROM   ( 
+		SELECT  count(*) as cnt	
+ 
+		FROM CRM_IGSRRQ_IR A
+			,CRM_SCEQRY_TB B 
+		 	,CRM_IGOPTY_IR C
+		WHERE 	A.IF_DLR_CODE = #{sv_dlrNo}
+				AND  A.SR_NUM = B.EQRY_SR_NUM(+)
+				AND  A.SR_NUM = C.OPTY_NUM
+				AND (       
+		                   A.IF_TYPE = 'ServiceRequest'         AND     A.SR_TYPE_CD IN ('General Enquiry - Used Buying','Sales Campaign Enquiry','Enquiry Campaign Sales','General Enquiry - Sales','Sales Query')
+		                OR A.IF_TYPE = 'Opportunity'
+		            )
+             <if test='sv_fromDate != "" and sv_fromDate != null and sv_toDate != "" and sv_toDate != null'  >
+				AND A.IF_CREATED BETWEEN #{sv_fromDate} AND #{sv_toDate}
+			</if> 
+         	<if test='sv_customerName != "" and sv_customerName != null'  >
+				AND UPPER(A.LAST_NAME) LIKE '%'||UPPER(#{sv_customerName})||'%'
+			</if> 
+			
+				AND A.IF_CREATED IS NOT NULL
+			<if test='sv_mobileNum != "" and sv_mobileNum != null'  >
+				AND UPPER(A.CELL_PH_NUM) LIKE '%'||UPPER(#{sv_mobileNum})||'%'
+			</if>					
+			)
+			
+	</select>
+<!-- selectHMIsalesCallCenterMainList 조회 -->
+	<select id="selectHMIsalesCallCenterMainList" parameterType="ndmsMap" resultType="ndmsMap">
+	/* [CRMFHMIsalesCallCenterDAO.selectHMIsalesCallCenterMainList1] */
+SELECT *
+FROM (
+		SELECT ROWNUM AS RNUM, T1.*
+		  FROM(
+		SELECT  TO_CHAR(TO_DATE(A.IF_CREATED,'YY/MM/DD'),'DD/MM/YYYY')          AS CREATE_DATE
+		        ,C.MODEL_DESC		AS MODEL
+		        ,A.SR_NUM            
+		        ,A.LAST_NAME          AS CUSTOMER_NAME
+		        ,A.CELL_PH_NUM        AS MOBILE_NO
+		        ,A.DESC_TEXT          AS COMMENTS
+		        ,A.IF_STATUS          AS STATUS
+                ,A.CUST_TYPE
+                ,A.HOME_PH_NUM        AS REGIDENTIAL_NO
+                ,A.WORK_PH_NUM        AS OFFICE
+                ,A.FAX_PH_NUM         AS FAX
+                ,A.PCITY_CODE         AS CITY
+                ,A.PSTCD_CODE         AS STATE
+                ,A.SR_AREA            AS DISTRICT
+                ,A.PPIN_CODE          AS PIN
+                ,A.PADDR1             AS ADDRESS
+                ,A.EMAIL_ADDR         AS E_MAIL
+                ,A.JOB_CODE           AS JOB_CODE
+                ,NVL(TO_CHAR(TO_DATE(A.BIRTH_YEAR || A.BIRTH_MMDD , 'YYYYMMDD'),'DD/MM/YYYY'),'') AS BIRTHDAY
+                ,NVL(TO_CHAR(TO_DATE(A.WED_YEAR || A.WED_MMDD , 'YYYYMMDD'),'DD/MM/YYYY'),'')     AS WEDDING_DATE
+                ,A.IF_TYPE
+                ,A.SR_TYPE_CD
+                ,A.IF_DLR_CODE          AS DLR_NO
+                ,A.X_HOME_PH_NUM1       AS REGIDENTIAL_STD
+                ,A.X_WORK_PH_NUM1       AS OFFICE_STD
+                ,A.X_WORK_PH_NUM1       AS OFFICE_ETN
+                ,A.X_FAX_PH_NUM1        AS FAX_STD
+                
+		FROM CRM_IGSRRQ_IR A
+		 	,CRM_SCEQRY_TB B
+		 	,CRM_IGOPTY_IR C
+		WHERE A.IF_DLR_CODE = #{sv_dlrNo}
+		AND  A.SR_NUM = B.EQRY_SR_NUM(+)
+		AND  A.SR_NUM = C.OPTY_NUM
+		AND (       
+                   A.IF_TYPE = 'ServiceRequest'         AND     A.SR_TYPE_CD IN ('General Enquiry - Used Buying','Sales Campaign Enquiry','Enquiry Campaign Sales','General Enquiry - Sales','Sales Query')
+                OR A.IF_TYPE = 'Opportunity'
+            )  
+            <if test='sv_fromDate != "" and sv_fromDate != null and sv_toDate != "" and sv_toDate != null'  >
+				AND A.IF_CREATED BETWEEN #{sv_fromDate} AND #{sv_toDate}
+			</if>  
+			<if test='sv_customerName != "" and sv_customerName != null'  >
+				AND UPPER(A.LAST_NAME) LIKE '%'||UPPER(#{sv_customerName})||'%'
+			</if>
+			<if test='sv_mobileNum != "" and sv_mobileNum != null'  >
+				AND UPPER(A.CELL_PH_NUM) LIKE '%'||UPPER(#{sv_mobileNum})||'%'
+			</if>			 
+		
+		
+		AND A.IF_CREATED IS NOT NULL
+		ORDER BY A.IF_CREATED DESC
+            
+						
+			) T1
+			<where>
+				<if test='firstIndex != -1 and lastIndex != -1'>
+					ROWNUM <![CDATA[<=]]> #{lastIndex}
+				</if>
+			</where>
+	)
+		<where>
+			<if test='firstIndex != -1 and lastIndex != -1'>
+				RNUM > #{firstIndex}
+			</if>
+		</where>
+</select>
+
+	
+	
+<select id="selectDlrCodeList" parameterType="ndmsMap" resultType="ndmsMap">
+	/* [CRMFHMIsalesCallCenterDAO.selectDlrCodeList] */
+<!-- 		SELECT ROWNUM ,DLR.* -->
+<!-- 		FROM ( -->
+		        SELECT  DLRM_DLR_NO			AS CMM_CODE
+		                ,DLRM_DLR_NO		AS CMM_CODE_NAME2
+						,'( '||DLRM_DLR_NO||' ) '||DLRM_DLR_DSCTN AS CMM_CODE_NAME
+		        FROM    CMM_CADLRM_TB
+		        WHERE   1=1
+<!-- 		        AND     DLRM_MAIN_DLR_YN    = 'Y' -->
+		        ORDER BY DLRM_DLR_NO
+<!-- 		    )DLR -->
+<!-- 		WHERE ROWNUM BETWEEN 0 AND 1000 					 -->
+
+</select>	
+	
+	
+<select id="selectSrNumCheck" parameterType="ndmsMap" resultType="ndmsMap">
+	/* [CRMFHMIsalesCallCenterDAO.selectSrNumCheck] */
+			SELECT *
+			FROM CRM_SCEQRY_TB
+			WHERE EQRY_SR_NUM = #{sv_srNum}
+
+	
+</select>	
+	
+<insert id="insertCustomerEnquiryMaster" parameterType="ndmsMap">
+	/* [CRMFHMIsalesCallCenterDAO.insertCustomerEnquiryMaster] */
+		
+		<selectKey resultType="string" keyProperty="enquriyNo" order="BEFORE">
+			SELECT 'E' || (NVL(TO_CHAR(MAX(SUBSTR(EQRY_ENQRY_NO,2))) , TO_CHAR(SYSDATE , 'YYYY') || '00000' ) + 1) AS  
+				FROM CRM_SCEQRY_TB 
+				WHERE EQRY_ENQRY_NO LIKE  'E' || TO_CHAR(SYSDATE , 'YYYY') || '%'
+        </selectKey>
+        
+				           
+		 INSERT INTO    CRM_SCEQRY_TB (
+		                EQRY_ENQRY_NO
+		              , EQRY_DLR_NO
+		              , EQRY_CORP_NO
+		              , EQRY_CMPN_NO
+		              , EQRY_DATE
+		              , EQRY_SRC_CODE
+		              , EQRY_STAT
+		              , EQRY_TYPE
+		              , EQRY_LOAN_AMT
+		              , EQRY_TENOR_MNTHS
+		              , EQRY_EXPCT_PRICE
+					  , EQRY_QUOTD_PRICE
+		              , EQRY_EMP_NO
+					  , EQRY_CUST_NO
+		              , EQRY_CRTE_DTIME
+					  , EQRY_CRTE_EMP_NO
+					  , EQRY_UPDT_DTIME
+					  , EQRY_UPDT_EMP_NO
+		              , EQRY_SR_NUM
+		              , EQRY_ASSOCIATE_ID
+		              , EQRY_FUEL_TYPE
+					  , EQRY_PRESENT_CAR_YN
+		              , EQRY_APNT_DTIME
+					  , VIST_DTIME
+					  , LEAV_DTIME
+					  , EQRY_CTGR_CODE    
+		              , EQRY_SUB_SRC_CODE
+		              
+		 )VALUES(
+		                #{enquriyNo}
+		              , #{sv_dealer}
+		              , #{ndmsCorpNo}
+		              , #{ndmsCmpnNo}
+		              , TO_CHAR(TO_DATE(SYSDATE), 'YYYYMMDD')
+		              , #{eqrySrc}
+		              , '01'
+		              , #{eqryType}
+		              , 0
+					  , 0
+		              , 0
+					  , 0
+		              , #{crdtEmpNo}
+					  , #{custNo}
+		              , SYSDATE
+					  , #{crdtEmpNo}
+					  , SYSDATE
+					  , #{updtEmpNo}
+		              , #{sv_srNum}
+		              , #{associateNo}
+		              , #{fuelType}
+					  , #{presentCar}
+		              , NULL
+		              , NULL
+					  , NULL 
+					  , #{eqryCate}
+					  , #{eqrySrcSub}
+		              
+		 )     
+	</insert>
+	
+	
+	<insert id="insertCustomerEnquiryCarInfo" parameterType="ndmsMap">
+	/* [CRMFHMIsalesCallCenterDAO.insertCustomerEnquiryCarInfo] */
+        
+		INSERT INTO CRM_SCEQCR_TB ( 
+			EQCR_ENQRY_NO     
+			,EQCR_DLR_NO        
+			,EQCR_CORP_NO      
+			,EQCR_CMPN_NO  
+			,EQCR_SEQ        
+			,EQCR_MODEL_CODE   
+			,EQCR_VRNT_CODE    
+			,EQCR_COLOR_CODE   
+			,EQCR_QTY          
+			,EQCR_CRTE_DTIME   
+			,EQCR_CRTE_EMP_NO  
+			,EQCR_UPDT_DTIME   
+			,EQCR_UPDT_EMP_NO  
+<!-- 			,EQCR_MAKER_CODE   -->
+<!-- 			,EQCR_INT_COLOR_CODE  -->
+<!-- 			,EQCR_FUEL_TYPE -->
+			)
+		VALUES 
+			(
+			#{enquriyNo}
+			, #{sv_dealer}
+			, #{ndmsCorpNo}
+			, #{ndmsCmpnNo}
+			, '001'
+			, #{sv_model}
+			, #{vrntSub}
+			, #{extColor}
+			, 1
+			, SYSDATE
+			, #{crdtEmpNo}
+			, SYSDATE
+			, #{updtEmpNo}
+<!-- 			, ''    -->
+<!-- 			, #{intColor} -->
+<!-- 			, #{fuelType} -->
+			)
+			
+	</insert>
+	
+    <update id="updateCustomerEnquiryMaster" parameterType="ndmsMap">
+       /* [CRMFHMIsalesCallCenterDAO.updateCustomerEnquiryMaster] */
+       UPDATE CRM_SCEQRY_TB
+       SET EQRY_DLR_NO =  #{sv_dealer}
+       WHERE EQRY_ENQRY_NO = #{sv_enqryNo}
+    </update>  
+	
+	   <update id="updateCustomerEnquiryCarInfo" parameterType="ndmsMap">
+       /* [CRMFHMIsalesCallCenterDAO.updateCustomerEnquiryCarInfo] */
+       UPDATE CRM_SCEQCR_TB
+       SET EQCR_DLR_NO = #{sv_dealer}
+       WHERE EQCR_ENQRY_NO = #{sv_enqryNo}
+    </update>  
+	
+	
+	   <update id="updateHMISalesCallCenterList" parameterType="ndmsMap">
+       /* [CRMFHMIsalesCallCenterDAO.updateHMISalesCallCenterList] */
+       UPDATE CRM_IGSRRQ_IR
+       SET DESC_TEXT = #{sv_opinion}
+       ,IF_DLR_CODE = #{sv_dealer}
+<!--        ,IF_STATUS = 'Assigned' -->
+       WHERE SR_NUM = #{sv_srNum}
+    </update>  	
+	
+	
+	
+</mapper>

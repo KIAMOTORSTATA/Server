@@ -1,0 +1,6 @@
+BranchProjectTracker__D\:\\Demo\\GitServer\\.git_Meghana=<?xml version\="1.0" encoding\="UTF-8"?>\r\n<projects branch\="Meghana">\r\n<project>\\ndms_app\\kndcs</project>\r\n</projects>
+BranchProjectTracker__D\:\\Demo\\GitServer\\.git_devel=<?xml version\="1.0" encoding\="UTF-8"?>\r\n<projects branch\="devel">\r\n<project>\\ndms_app\\kndcs</project>\r\n</projects>
+commit_dialog_history_messages=<?xml version\="1.0" encoding\="UTF-8"?>\r\n<messages>\r\n<message>TTL_915169</message>\r\n</messages>
+eclipse.preferences.version=1
+remote_connection_timeout=150
+show_initial_config_dialog=false

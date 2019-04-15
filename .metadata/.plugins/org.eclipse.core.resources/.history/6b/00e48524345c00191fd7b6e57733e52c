@@ -1,0 +1,1103 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!--
+    SQL File Name : dsNdmsNonXa-CRMCCustomerMeetingDAO_sql.xml
+    Description : Campaign Information
+    author ???
+    since 2018. 9. 06.
+    version 1.0
+    Modification Information
+       since          author              description
+    ===========    =============    ===========================
+    2018. 9. 06.     ???
+-->
+
+<mapper namespace="CRMCCustomerMeetingDAO">
+
+    <sql id="enquiryWhere1">
+         <where>
+            EQRY.EQRY_STAT = '09'  			<!-- Collect Enquiry Fiexed Condition : EQRY.EQRY_STAT = '07' 이 맞음. 일단 리스트르 보기 위해서  EQRY.EQRY_STAT = '10' 으로 변경 해 놓음 -->
+            AND EQRY.EQRY_NEWCAR_YN = 'Y'
+            <if test='dlrNo != "" and dlrNo != null' >
+                AND EQRY.EQRY_DLR_NO = #{dlrNo}
+            </if>
+            <if test='eqryNo != "" and eqryNo != null' >
+                AND EQRY.EQRY_ENQRY_NO = #{eqryNo}
+            </if>
+            <if test='custName != null and custName != ""'>
+                AND CSPM.CSPM_CUST_FULL_NAME COLLATE BINARY_CI like  '%'|| #{custName} || '%'
+            </if>
+            <if test='mobileNo != null and mobileNo != ""'>
+                AND CSPM.M_MOBL_PHONE_NO LIKE '%'|| #{mobileNo} || '%'
+            </if>
+            <if test="eqrySrc != '' and eqrySrc != null">
+                AND EQRY.EQRY_SRC_CODE = #{eqrySrc}
+            </if>
+            <if test="eqryType != '' and eqryType != null">
+                AND EQFU.EQFU_AFTR_ENQRY_TYPE = #{eqryType}
+            </if>
+            <if test="meetingFromDate != '' and meetingFromDate != null">
+                AND EQFU.EQFU_DATE <![CDATA[>=]]> #{meetingFromDate}
+            </if>
+            <if test="meetingToDate != '' and meetingToDate != null">
+                AND EQFU.EQFU_DATE <![CDATA[<=]]> #{meetingToDate}
+            </if>
+            <if test="modelCode != '' and modelCode != null">
+                AND EQCR.EQCR_MODEL_CODE = #{modelCode}
+            </if>
+            <if test="colorCode != '' and colorCode != null">
+                AND EQCR.EQCR_COLOR_CODE = #{colorCode}
+            </if>
+            <if test="perInChar != '' and perInChar != null">
+                AND EQRY.EQRY_FCALL_EMP_NO = #{perInChar}
+            </if>
+            <if test="scName != '' and scName != null">
+                AND CSPM.CSPM_CHRG_SALES_EMP_NO = #{scName}
+            </if>
+            <if test="panNo != '' and panNo != null">
+                   <!-- AND EQCR.EQCR_COLOR_CODE = #{panNo} -->
+            </if>
+            <if test="aadharNo != '' and aadharNo != null">
+                   <!-- AND EQCR.EQCR_COLOR_CODE = #{aadharNo} -->
+            </if>
+            <if test="emailAddr != '' and emailAddr != null">
+                AND CSPM.CSPM_EMAIL  like  '%'|| #{emailAddr} || '%'
+            </if>
+
+            <!-- <choose>
+                  <when test='sVinNo != null and sVinNo != "" and sVinFullFlag == "MY" '>
+              AND VINM_LAST_VIN      = #{sVinNo}
+                  </when>
+                  <when test='sVinNo != null and sVinNo != "" and sVinFullFlag == "MN" '>
+              AND VINM_LAST_VIN   LIKE #{sVinNo}||'%'
+                  </when>
+                  <when test='sVinNo != null and sVinNo != "" and sVinFullFlag == "FN" '>
+              AND VINM_VIN        LIKE #{sVinNo}||'%'
+                  </when>
+                  <when test='sVinNo != null and sVinNo != "" and sVinFullFlag == "FY" '>
+              AND VINM_VIN        = #{sVinNo}
+                  </when>
+            </choose> -->
+         </where>
+    </sql>
+    <sql id="orderBy1">
+        ORDER BY EQRY.EQRY_ENQRY_NO DESC
+        <!-- <choose>
+            <when test='sort != null and sort.size() != 0'>
+                <foreach item="item" index="index" collection="sort" open="" separator="," close="">
+                    <choose>
+                        <when test='item.field == "escmEstmtCodeNo"'>ESCM_ESTMT_CODE_NO <choose><when test='item.dir == "asc"'>ASC</when><otherwise>DESC</otherwise></choose></when>
+                        <when test='item.field == "escmModelCode"'  >ESCM_MODEL_CODE	<choose><when test='item.dir == "asc"'>ASC</when><otherwise>DESC</otherwise></choose></when>
+                        <when test='item.field == "escmName"'       >ESCM_NAME	        <choose><when test='item.dir == "asc"'>ASC</when><otherwise>DESC</otherwise></choose></when>
+                        <otherwise>
+                        ESCM_ESTMT_CODE_NO   ASC
+                        </otherwise>
+                    </choose>
+                </foreach>
+            </when>
+            <otherwise>
+                ESCM_ESTMT_CODE_NO ASC
+            </otherwise>
+        </choose> -->
+    </sql>
+
+    <select id="selectCustomerMeetingByConditionCnt" parameterType="ndmsMap" resultType="ndmsMap">
+    /* [CRMCCustomerMeetingDAO.selectCustomerMeetingByConditionCnt] */
+
+            SELECT COUNT(EQRY.EQRY_ENQRY_NO) AS VALUE
+            FROM CRM_SCEQRY_TB EQRY
+                JOIN CRM_CDCSPM_TB CSPM
+                    ON EQRY.EQRY_DLR_NO = CSPM.CSPM_DLR_NO
+                    AND EQRY.EQRY_CORP_NO = CSPM.CSPM_CORP_NO
+                    AND EQRY.EQRY_CMPN_NO = CSPM.CSPM_CMPN_NO
+                    AND EQRY.EQRY_CUST_NO = CSPM.CSPM_CUST_NO
+                LEFT JOIN CRM_CDCUDT_TB CUDT
+                  ON CSPM.CSPM_CUST_NO = CUDT.CUDT_CUST_NO
+                 AND CSPM.CSPM_DLR_NO = CUDT.CUDT_DLR_NO
+                 AND CSPM.CSPM_CORP_NO = CUDT.CUDT_CORP_NO
+                 AND CSPM.CSPM_CMPN_NO = CUDT.CUDT_CMPN_NO
+              LEFT JOIN CRM_CDCUAD_TB CUAD
+                  ON CSPM.CSPM_CUST_NO = CUAD.CUST_NO
+                 AND CSPM.CSPM_DLR_NO = CUAD.DLR_NO
+                 AND CSPM.CSPM_CORP_NO = CUAD.CORP_NO
+                 AND CSPM.CSPM_CMPN_NO = CUAD.CMPN_NO
+                 AND CUAD.USED_YN = 'Y'
+                JOIN CRM_SCEQCR_TB EQCR
+                    ON EQRY.EQRY_DLR_NO = EQCR.EQCR_DLR_NO
+                    AND EQRY.EQRY_CORP_NO = EQCR.EQCR_CORP_NO
+                    AND EQRY.EQRY_CMPN_NO = EQCR.EQCR_CMPN_NO
+                    AND EQRY.EQRY_ENQRY_NO = EQCR.EQCR_ENQRY_NO
+                LEFT OUTER JOIN CRM_SCEQFU_TB EQFU
+                    ON EQRY.EQRY_DLR_NO = EQFU.EQFU_DLR_NO
+                    AND EQRY.EQRY_CORP_NO = EQFU.EQFU_CORP_NO
+                    AND EQRY.EQRY_CMPN_NO = EQFU.EQFU_CMPN_NO
+                    AND EQRY.EQRY_ENQRY_NO = EQFU.EQFU_ENQRY_NO
+                    AND EQFU.EQFU_SEQ = (SELECT MAX(EQFU_SEQ)
+                                           FROM CRM_SCEQFU_TB
+                                          WHERE EQFU_ENQRY_NO = EQRY.EQRY_ENQRY_NO
+                                            AND EQFU_CORP_NO = EQRY.EQRY_CORP_NO
+                                            AND EQFU_CMPN_NO = EQRY.EQRY_CMPN_NO
+                                            AND EQFU_DLR_NO = EQRY.EQRY_DLR_NO)
+                LEFT OUTER JOIN SAL_SSMODL_TB MODL
+                    ON EQCR.EQCR_MODEL_CODE = MODL.MODL_MODEL_CODE
+                    AND EQCR.EQCR_CORP_NO  = MODL.MODL_CORP_NO
+                    AND EQCR.EQCR_CMPN_NO  = MODL.MODL_CMPN_NO
+                LEFT OUTER JOIN SAL_SSVRNT_TB VRNT
+                    ON EQCR.EQCR_VRNT_CODE = VRNT.VRNT_CODE
+                    AND EQCR.EQCR_CORP_NO  = VRNT.VRNT_CORP_NO
+                    AND EQCR.EQCR_CMPN_NO  = VRNT.VRNT_CMPN_NO
+                LEFT OUTER JOIN SAL_SSCOLR_TB COLR
+                    ON EQCR.EQCR_COLOR_CODE = COLR.COLR_CODE
+                    AND EQCR.EQCR_CORP_NO  = COLR.COLR_CORP_NO
+                    AND EQCR.EQCR_CMPN_NO  = COLR.COLR_CMPN_NO
+                <include refid="enquiryWhere1" />
+
+    </select>
+
+    <select id="selectCustomerMeetingByCondition" parameterType="ndmsMap" resultType="ndmsMap">
+    /* [CRMCCustomerMeetingDAO.selectCustomerMeetingByCondition] */
+
+        SELECT    RNUM
+                , EQRY_DLR_NO AS DLR_NO
+                , EQRY_CORP_NO AS CORP_NO
+                , EQRY_CMPN_NO AS CMPN_NO
+                , EQRY_ENQRY_NO AS ENQRY_NO
+                , TO_CHAR(TO_DATE(EQRY_DATE, 'yyyyMMdd'), 'dd/MM/yyyy') AS EQRY_DATE
+                , EQRY_SRC_CODE AS EQRY_SRC_CODE
+                , EQRY_SRC_CODE AS EQRY_SRC_NAME
+                , EQRY_SUB_SRC_CODE AS EQRY_SUB_SRC_CODE
+                ,(SELECT ENSC_NAME
+                    FROM CRM_SDENSC_TB
+                   WHERE ENSC_GRP_CODE = 'DSO0001'
+                     AND ENSC_CORP_NO = EQRY_CORP_NO
+                     AND ENSC_CMPN_NO = EQRY_CMPN_NO
+                     AND ENSC_CODE = EQRY_SUB_SRC_CODE
+                     AND ROWNUM = 1) AS EQRY_SUB_SRC_NAME
+                , EQRY_STAT AS EQRY_STAT
+                , EQRY_TYPE AS EQRY_TYPE
+                , FNC_GET_CODE_NAME('DSO0003', EQFU_AFTR_ENQRY_TYPE, #{sLangCd}) AS EQRY_TYPE_NAME
+                , EQRY_CTGR_CODE AS EQRY_CATE
+                , EQRY_EMP_NO AS EMP_NO
+                , EQRY_CUST_NO AS CUST_NO
+                , EQRY_TEST_DRIVE_YN AS TEST_DRIVE
+                , CSPM_CUST_NO AS CSPM_CUST_NO
+                , CSPM_CUST_FRST_NAME AS CUST_FRST_NAME
+                , CSPM_CUST_MIDL_NAME AS CUST_MIDL_NAME
+                , CSPM_CUST_LAST_NAME AS CUST_LAST_NAME
+                , CSPM_CUST_FULL_NAME AS CUST_NAME
+                , CSPM_CUST_TYPE AS CUST_TYPE
+                , (SELECT CMM_CODE_NAME
+                     FROM CMM_CMCD_TB
+                    WHERE CORP_NO = EQRY_CORP_NO
+                      AND CMPN_NO = EQRY_CMPN_NO
+                      AND CMM_GRP_CODE = 'DSS0005'
+                      AND CMM_CODE = CSPM_CUST_TYPE
+                      AND ROWNUM = 1) AS CUST_TYPE_NAME
+                , CSPM_RESDC_PHONE_NO
+                , ( SELECT CMM_CODE_NAME
+                      FROM CMM_CMCD_TB
+                     WHERE CMM_GRP_CODE='DC00010'
+                       AND CMM_CODE = CUDT_SEX_TYPE
+                       AND ROWNUM = 1) AS GENDER
+                , (SELECT CMM_CODE_NAME
+                     FROM CMM_CMCD_TB
+                    WHERE CORP_NO = EQRY_CORP_NO
+                      AND CMPN_NO = EQRY_CMPN_NO
+                      AND CMM_GRP_CODE = 'DC00014'
+                      AND CMM_CODE = LCTY_CODE
+                      AND ROWNUM = 1) AS LOCATION
+                , STCD_CODE AS STATE
+                , CITY_CODE AS CITY
+                , DSTRT_CODE AS DISTRICT
+                , ADDR AS ADDRESS
+                , PIN_CODE AS PIN
+                , VILL_NAME AS VILLAGE
+                , CSPM_AADHAR_NO AS AADHAR_NO
+                , AADHAR_VRFI AS AADHAR_VRFI
+                , M_MOBL_PHONE_NO AS M_MOBL_PHONE_NO
+                , S_MOBL_PHONE_NO AS S_MOBL_PHONE_NO
+                , TO_CHAR(TO_DATE(CONCAT(EQFU_DATE, EQFU_TIME), 'yyyy/mm/dd hh24:mi:ss'), 'dd/mm/yyyy hh24:mi') AS MEETING_DATE
+                , TO_CHAR(TO_DATE(CONCAT(EQFU_NTFU_DATE, EQFU_NTFU_TIME), 'yyyy/mm/dd hh24:mi:ss'), 'dd/mm/yyyy hh24:mi') AS NTFU_DATE
+                , EQCR_MODEL_CODE AS EQCR_MODEL_CODE
+                , EQCR_VRNT_CODE AS EQCR_VRNT_CODE
+                , EQCR_COLOR_CODE AS EQCR_COLOR_CODE
+                , MODL_MODEL_CODE AS MODEL_CODE
+                , MODL_FULL_DSCTN AS MODL_FULL_DSCTN
+                , MODL_SHORT_DSCTN AS MODL_NAME
+                , VRNT_CODE AS VRNT_CODE
+                , VRNT_DSCTN AS VRNT_NAME
+                , VRNT_LOGN_DSCTN AS VRNT_LOGN_DSCTN
+                , COLR_CODE AS COLR_CODE
+                , COLR_FULL_DSCTN AS COLR_FULL_DSCTN
+                , COLR_SHORT_DSCTN AS COLR_NAME
+                , CSPM_CHRG_SALES_EMP_NO AS SC_NO
+                , (SELECT EMPM_EMP_NAME
+                     FROM CMM_CAEMPM_TB
+                     WHERE EMPM_DLR_NO = EQRY_DLR_NO
+                       AND EMPM_CORP_NO = EQRY_CORP_NO
+                       AND EMPM_CMPN_NO = EQRY_CMPN_NO
+                       AND EMPM_EMP_NO = CSPM_CHRG_SALES_EMP_NO
+                       AND ROWNUM = 1) AS SC_NAME
+                , EQRY_FUEL_TYPE
+                , '' AS ACTI_NAME
+                , '' AS ACTI_LOC
+                , '' AS PER_IN_CHAR
+                , '' AS VISIT_TIME
+                , '' AS LEAVING_TIME
+                , '' AS REASON_FOR_LOSS
+                , '' AS LOST_DUE_TO
+          FROM (
+          SELECT ROWNUM AS RNUM ,T1.*
+            FROM (
+                    SELECT    EQRY.EQRY_DLR_NO
+                            , EQRY.EQRY_CORP_NO
+                            , EQRY.EQRY_CMPN_NO
+                            , EQRY.EQRY_ENQRY_NO
+                            , EQRY.EQRY_DATE
+                            , EQRY.EQRY_SRC_CODE
+                            , EQRY.EQRY_SUB_SRC_CODE
+                            , EQRY.EQRY_STAT
+                            , EQRY.EQRY_TYPE
+                            , EQFU.EQFU_AFTR_ENQRY_TYPE
+                            , EQRY.EQRY_CTGR_CODE
+                            , EQRY.EQRY_EMP_NO
+                            , EQRY.EQRY_CUST_NO
+                            , EQRY.EQRY_TEST_DRIVE_YN
+                            , CSPM.CSPM_CUST_NO
+                            , CSPM.CSPM_CUST_FRST_NAME
+                            , CSPM.CSPM_CUST_MIDL_NAME
+                            , CSPM.CSPM_CUST_LAST_NAME
+                            , CSPM.CSPM_CUST_FULL_NAME
+                            , CSPM.CSPM_CUST_TYPE
+                            , CSPM_RESDC_PHONE_NO
+                            , cudt.CUDT_SEX_TYPE
+                            , CUAD.LCTY_CODE
+                            , CUAD.STCD_CODE
+                            , CUAD.CITY_CODE
+                            , CUAD.DSTRT_CODE
+                            , CUAD.ADDR
+                            , CUAD.PIN_CODE
+                            , CUAD.VILL_NAME
+                            , CSPM.CSPM_AADHAR_NO
+                            , CSPM.AADHAR_VRFI
+                            , CSPM.M_MOBL_PHONE_NO
+                            , CSPM.S_MOBL_PHONE_NO
+                            , EQFU.EQFU_DATE
+                            , EQFU.EQFU_TIME
+                            , EQFU.EQFU_NTFU_DATE
+                            , EQFU.EQFU_NTFU_TIME
+                            , EQCR.EQCR_MODEL_CODE
+                            , EQCR.EQCR_VRNT_CODE
+                            , EQCR.EQCR_COLOR_CODE
+                            , MODL.MODL_MODEL_CODE
+                            , MODL.MODL_FULL_DSCTN
+                            , MODL.MODL_SHORT_DSCTN
+                            , VRNT.VRNT_CODE
+                            , VRNT.VRNT_DSCTN
+                            , VRNT.VRNT_LOGN_DSCTN
+                            , COLR.COLR_CODE
+                            , COLR.COLR_FULL_DSCTN
+                            , COLR.COLR_SHORT_DSCTN
+                            , CSPM.CSPM_CHRG_SALES_EMP_NO
+                            , EQRY.EQRY_FUEL_TYPE
+                    FROM CRM_SCEQRY_TB EQRY
+                        JOIN CRM_CDCSPM_TB CSPM
+                            ON EQRY.EQRY_DLR_NO = CSPM.CSPM_DLR_NO
+                            AND EQRY.EQRY_CORP_NO = CSPM.CSPM_CORP_NO
+                            AND EQRY.EQRY_CMPN_NO = CSPM.CSPM_CMPN_NO
+                            AND EQRY.EQRY_CUST_NO = CSPM.CSPM_CUST_NO
+                        LEFT JOIN CRM_CDCUDT_TB CUDT
+                              ON CSPM.CSPM_CUST_NO = CUDT.CUDT_CUST_NO
+                             AND CSPM.CSPM_DLR_NO = CUDT.CUDT_DLR_NO
+                             AND CSPM.CSPM_CORP_NO = CUDT.CUDT_CORP_NO
+                             AND CSPM.CSPM_CMPN_NO = CUDT.CUDT_CMPN_NO
+                          LEFT JOIN CRM_CDCUAD_TB CUAD
+                              ON CSPM.CSPM_CUST_NO = CUAD.CUST_NO
+                             AND CSPM.CSPM_DLR_NO = CUAD.DLR_NO
+                             AND CSPM.CSPM_CORP_NO = CUAD.CORP_NO
+                             AND CSPM.CSPM_CMPN_NO = CUAD.CMPN_NO
+                             AND CUAD.USED_YN = 'Y'
+                        JOIN CRM_SCEQCR_TB EQCR
+                            ON EQRY.EQRY_DLR_NO = EQCR.EQCR_DLR_NO
+                            AND EQRY.EQRY_CORP_NO = EQCR.EQCR_CORP_NO
+                            AND EQRY.EQRY_CMPN_NO = EQCR.EQCR_CMPN_NO
+                            AND EQRY.EQRY_ENQRY_NO = EQCR.EQCR_ENQRY_NO
+                        LEFT OUTER JOIN CRM_SCEQFU_TB EQFU
+                            ON EQRY.EQRY_DLR_NO = EQFU.EQFU_DLR_NO
+                            AND EQRY.EQRY_CORP_NO = EQFU.EQFU_CORP_NO
+                            AND EQRY.EQRY_CMPN_NO = EQFU.EQFU_CMPN_NO
+                            AND EQRY.EQRY_ENQRY_NO = EQFU.EQFU_ENQRY_NO
+                            AND EQFU.EQFU_SEQ = (SELECT MAX(EQFU_SEQ)
+                                           FROM CRM_SCEQFU_TB
+                                          WHERE EQFU_ENQRY_NO = EQRY.EQRY_ENQRY_NO
+                                            AND EQFU_CORP_NO = EQRY.EQRY_CORP_NO
+                                            AND EQFU_CMPN_NO = EQRY.EQRY_CMPN_NO
+                                            AND EQFU_DLR_NO = EQRY.EQRY_DLR_NO)
+                        LEFT OUTER JOIN SAL_SSMODL_TB MODL
+                            ON EQCR.EQCR_MODEL_CODE = MODL.MODL_MODEL_CODE
+                            AND EQCR.EQCR_CORP_NO  = MODL.MODL_CORP_NO
+                            AND EQCR.EQCR_CMPN_NO  = MODL.MODL_CMPN_NO
+                        LEFT OUTER JOIN SAL_SSVRNT_TB VRNT
+                            ON EQCR.EQCR_VRNT_CODE = VRNT.VRNT_CODE
+                            AND EQCR.EQCR_CORP_NO  = VRNT.VRNT_CORP_NO
+                            AND EQCR.EQCR_CMPN_NO  = VRNT.VRNT_CMPN_NO
+                        LEFT OUTER JOIN SAL_SSCOLR_TB COLR
+                            ON EQCR.EQCR_COLOR_CODE = COLR.COLR_CODE
+                            AND EQCR.EQCR_CORP_NO  = COLR.COLR_CORP_NO
+                            AND EQCR.EQCR_CMPN_NO  = COLR.COLR_CMPN_NO
+                        LEFT OUTER JOIN CMM_CAEMPM_TB EMPM
+                            ON EQRY.EQRY_CMPN_NO = EMPM.EMPM_CMPN_NO
+                            AND EQRY.EQRY_CORP_NO = EMPM.EMPM_CORP_NO
+                            AND EQRY.EQRY_DLR_NO = EMPM.EMPM_DLR_NO
+                            AND EQRY.EQRY_EMP_NO = EMPM.EMPM_EMP_NO
+                    <include refid="enquiryWhere1" />
+                    <include refid="orderBy1" />
+
+             ) T1
+             <where>
+                 <if test='firstIndex != -1 and lastIndex != -1'>
+                     ROWNUM <![CDATA[<=]]> #{lastIndex}
+                 </if>
+             </where>
+        )
+         <where>
+             <if test='firstIndex != -1 and lastIndex != -1'>
+                 RNUM > #{firstIndex}
+             </if>
+         </where>
+    </select>
+
+    <select id="selectCustomerMeetingyByCustNo" parameterType="ndmsMap" resultType="ndmsMap">
+    /* [CRMCCustomerMeetingDAO.selectCustomerMeetingyByCustNo] */
+       SELECT EQRY.EQRY_DLR_NO AS DLR_NO
+            , EQRY.EQRY_CORP_NO AS CORP_NO
+            , EQRY.EQRY_CMPN_NO AS CMPN_NO
+            , EQRY.EQRY_ENQRY_NO AS ENQRY_NO
+            , EQRY.EQRY_DATE AS EQRY_DATE
+            , EQRY.EQRY_SRC_CODE AS EQRY_SRC
+            , EQRY.EQRY_SUB_SRC_CODE AS EQRY_SRC_SUB
+            , EQRY.EQRY_STAT AS EQRY_STAT
+            , EQRY.EQRY_TYPE AS EQRY_TYPE
+            , EQRY.EQRY_LISTD_CORP AS CORP_CODE
+            , (SELECT CORP_CAT_CODE || '-' || CORP_NAME_CODE
+                 FROM SAL_SRCORP_TB
+                WHERE CORP_CODE = EQRY.EQRY_LISTD_CORP
+                  AND ROWNUM = 1) AS CORP_NAME
+             , EQRY.EQRY_CORP_NAME
+            , (SELECT CMM_CODE_NAME
+                 FROM CMM_CMCD_TB
+                WHERE CORP_NO = EQRY.EQRY_CORP_NO
+                  AND CMPN_NO = EQRY.EQRY_CMPN_NO
+                  AND CMM_GRP_CODE = 'DSO0003'
+                  AND CMM_CODE = EQFU.EQFU_AFTR_ENQRY_TYPE
+                  AND ROWNUM = 1) AS EQRY_TYPE_NAME
+            , EQRY.EQRY_CTGR_CODE AS EQRY_CATE
+            , EQRY.EQRY_EMP_NO AS EMP_NO
+            , EQRY.EQRY_CUST_NO AS CUST_NO
+            , CSPM.CSPM_CUST_NO AS CSPM_CUST_NO
+            , CSPM.CSPM_CUST_FRST_NAME AS CUST_FRST_NAME
+            , CSPM.CSPM_CUST_MIDL_NAME AS CUST_MIDL_NAME
+            , CSPM.CSPM_CUST_LAST_NAME AS CUST_LAST_NAME
+            , CSPM.CSPM_CUST_FULL_NAME AS CUST_NAME
+            , CSPM.CSPM_CUST_TYPE AS CUST_TYPE
+            , CSPM.CSPM_WHATA_ID AS WHATS_APP_ID
+            , CSPM.CSPM_EMAIL AS EMAIL
+            , CSPM_RESDC_PHONE_NO AS RESDC_PHONE_NO
+            , (SELECT CMM_CODE_NAME
+                 FROM CMM_CMCD_TB
+                WHERE CMM_GRP_CODE = 'DSS0005'
+                  AND CMM_CODE = CSPM.CSPM_CUST_TYPE
+                  AND ROWNUM = 1) AS CUST_TYPE_NAME
+            , (SELECT CMM_CODE_NAME
+                 FROM CMM_CMCD_TB
+                WHERE CMM_GRP_CODE='DC00010'
+                  AND CMM_CODE = cudt.CUDT_SEX_TYPE
+                  AND ROWNUM = 1) AS GENDER
+            , (SELECT CMM_CODE_NAME
+                 FROM CMM_CMCD_TB
+                WHERE CORP_NO = EQRY.EQRY_CORP_NO
+                  AND CMPN_NO = EQRY.EQRY_CMPN_NO
+                  AND CMM_GRP_CODE = 'DC00014'
+                  AND CMM_CODE = CUAD.LCTY_CODE
+                  AND ROWNUM = 1) AS LOCATION
+            , CUAD.STCD_CODE AS STATE
+            , CUAD.CITY_CODE AS CITY
+            , CUAD.DSTRT_CODE AS DISTRICT
+            , CUAD.ADDR AS ADDRESS
+            , CUAD.PIN_CODE AS PIN
+            , CUAD.VILL_NAME AS VILLAGE
+            , CSPM.CSPM_AADHAR_NO AS AADHAR_NO
+            , CSPM.AADHAR_VRFI AS AADHAR_VRFI
+            , CSPM.M_MOBL_PHONE_NO AS MOBILE_NO
+            , CSPM.S_MOBL_PHONE_NO AS S_MOBL_PHONE_NO
+            , EQFU.EQFU_DATE AS CALL_DATE
+            , EQFU.EQFU_NTFU_DATE || ' ' || EQFU.EQFU_NTFU_TIME AS NTFU_DATE
+            , EQCR.EQCR_MODEL_CODE AS MODEL
+            , EQCR.EQCR_VRNT_CODE AS VARIANT_SUB
+            , (SELECT VRNT_GRP_DSCTN
+                 FROM SAL_SSVRNT_TB
+                WHERE VRNT_CODE = EQCR.EQCR_VRNT_CODE
+                  AND ROWNUM = 1) AS VARIANT
+            , EQCR.EQCR_COLOR_CODE AS EXT_COLOR
+            , EQRY.EQRY_QUOTD_PRICE
+            , EQRY.EQRY_EXPCT_PRICE AS EXPECTED_PRICE
+            , EQCR.EQCR_QUOTED_PRICE AS QUOTED_PRICE
+            , EQCR.EQCR_MODEL_CODE
+            , EQRY.EQRY_EXCHG_YN AS EXCHANGE
+            , EQRY.EQRY_EXCHG_SRC_CODE AS EXCHANGE_SRC
+            , EQRY.EQRY_EXCHG_MODEL_CODE AS MODEL_UC
+            , EQRY.EQRY_MAKER_CODE AS OEM
+            , EQRY.EQRY_P_MODL_YEAR AS MODEL_YEAR
+            , EQCR.EQCR_INT_COLOR_CODE AS INT_COLOR
+            , CSPM.CSPM_CHRG_SALES_EMP_NO AS SC_NAME
+            , '' AS ACTI_NAME
+            , '' AS ACTI_LOC
+            , (SELECT DECODE(COUNT(*),0,'N','Y')
+                 FROM CRM_STDMST_TB
+                WHERE TSTDRV_ENQ_NO = EQRY.EQRY_ENQRY_NO
+                  AND TSTDRV_CUST_ID = EQRY.EQRY_CUST_NO
+                  AND TSTDRV_MODEL_ID = EQCR.EQCR_MODEL_CODE
+                  AND ROWNUM = 1) AS TEST_DRIVE_YN
+            , EQRY.EQRY_PRESENT_CAR_YN AS PRESENT_CAR
+            , EQRY.EQRY_CLSE_DATE AS EQRY_CLSE_DATE
+            , EQRY.EQRY_CLSE_GRP_TYPE AS LOST_DUE_TO
+            , EQRY.EQRY_CLSE_TYPE AS LOST_DUE_TO_SUB
+            , EQRY.EQRY_RSO_ID AS RSO_IDS
+            , EQRY.EQRY_CLSE_RMRKS AS REMARK
+            , EQRY.EQRY_FUEL_TYPE AS FUEL_TYPE
+            , CSPM.CSPM_CHRG_SALES_EMP_NO AS SALES_CONSULTANT
+            , EQFU.EQFU_AFTR_ENQRY_TYPE AS EQRY_TYPE_FLUP
+            , EQFU.EQFU_VERIFI_YN AS VERIFICATION
+            , EQFU.INFECT_RSON AS INEFFECTUALITY_REASON
+            , EQRY.EQRY_ASSOCIATE_ID AS ASSOCIATE_NO
+            , (SELECT VNDR_VNDR_NAME
+                 FROM SAL_CAVNDR_TB
+                WHERE VNDR_CMPN_NO = #{ndmsCmpnNo}
+                  AND VNDR_CORP_NO = #{ndmsCorpNo}
+                  AND VNDR_CODE = TO_CHAR(EQRY.EQRY_ASSOCIATE_ID)
+                  AND ROWNUM = 1) AS ASSOCIATE
+            , EQRY.EQRY_FNCE_YN AS FINANCE_REQ_YN
+            , EQRY.EQRY_FNCER_CODE AS FINANCIER
+            , EQRY.EQRY_LOAN_AMT AS LOAN_AMOUNT
+             , EQRY_FCALL_EMP_NO AS FCALL_EMP_NO
+             , (SELECT EMPM_EMP_NAME
+                  FROM CMM_CAEMPM_TB
+                 WHERE EMPM_DLR_NO = EQRY.EQRY_DLR_NO
+                   AND EMPM_CORP_NO = EQRY.EQRY_CORP_NO
+                   AND EMPM_CMPN_NO = EQRY.EQRY_CMPN_NO
+                   AND EMPM_EMP_NO = EQRY.EQRY_FCALL_EMP_NO
+                   AND ROWNUM = 1) AS PER_IN_CHAR
+            FROM CRM_SCEQRY_TB EQRY
+                INNER JOIN CRM_CDCSPM_TB CSPM
+                    ON EQRY.EQRY_DLR_NO = CSPM.CSPM_DLR_NO
+                    AND EQRY.EQRY_CORP_NO = CSPM.CSPM_CORP_NO
+                    AND EQRY.EQRY_CMPN_NO = CSPM.CSPM_CMPN_NO
+                    AND EQRY.EQRY_CUST_NO = CSPM.CSPM_CUST_NO
+                LEFT JOIN CRM_CDCUDT_TB CUDT
+                      ON CSPM.CSPM_CUST_NO = CUDT.CUDT_CUST_NO
+                     AND CSPM.CSPM_DLR_NO = CUDT.CUDT_DLR_NO
+                     AND CSPM.CSPM_CORP_NO = CUDT.CUDT_CORP_NO
+                     AND CSPM.CSPM_CMPN_NO = CUDT.CUDT_CMPN_NO
+                  LEFT JOIN CRM_CDCUAD_TB CUAD
+                      ON CSPM.CSPM_CUST_NO = CUAD.CUST_NO
+                     AND CSPM.CSPM_DLR_NO = CUAD.DLR_NO
+                     AND CSPM.CSPM_CORP_NO = CUAD.CORP_NO
+                     AND CSPM.CSPM_CMPN_NO = CUAD.CMPN_NO
+                     AND CUAD.USED_YN = 'Y'
+                INNER JOIN CRM_SCEQCR_TB EQCR
+                    ON EQRY.EQRY_DLR_NO = EQCR.EQCR_DLR_NO
+                    AND EQRY.EQRY_CORP_NO = EQCR.EQCR_CORP_NO
+                    AND EQRY.EQRY_CMPN_NO = EQCR.EQCR_CMPN_NO
+                    AND EQRY.EQRY_ENQRY_NO = EQCR.EQCR_ENQRY_NO
+                LEFT OUTER JOIN CRM_SCEQFU_TB EQFU
+                    ON EQRY.EQRY_DLR_NO = EQFU.EQFU_DLR_NO
+                    AND EQRY.EQRY_CORP_NO = EQFU.EQFU_CORP_NO
+                    AND EQRY.EQRY_CMPN_NO = EQFU.EQFU_CMPN_NO
+                    AND EQRY.EQRY_ENQRY_NO = EQFU.EQFU_ENQRY_NO
+                    AND EQFU.EQFU_SEQ = (SELECT MAX(EQFU_SEQ)
+                                           FROM CRM_SCEQFU_TB
+                                          WHERE EQFU_ENQRY_NO = EQRY.EQRY_ENQRY_NO
+                                            AND EQFU_CORP_NO = EQRY.EQRY_CORP_NO
+                                            AND EQFU_CMPN_NO = EQRY.EQRY_CMPN_NO
+                                            AND EQFU_DLR_NO = EQRY.EQRY_DLR_NO)
+            WHERE EQRY.EQRY_STAT IN ('05', '07', '09')
+                AND EQRY.EQRY_DLR_NO = #{dlrNo}
+                AND EQRY.EQRY_ENQRY_NO = #{enqryNo}
+                AND EQRY.EQRY_CMPN_NO = #{ndmsCmpnNo}
+                AND EQRY.EQRY_CORP_NO = #{ndmsCorpNo}
+                AND CSPM.CSPM_CUST_NO = #{custNo}
+        <include refid="orderBy1" />
+    </select>
+
+    <!-- Lost Due To 정보 목록을 조회한다. -->
+    <select id="selectLostDueToCodeList" parameterType="ndmsMap" resultType="ndmsMap">
+        /* [CRMCSalesCustomerEnquiryDAO.selectLostDueToCodeList] */
+
+        SELECT ENCL_GRP_CODE AS CMM_CODE
+               ,ENCL_GRP_NAME AS CMM_CODE_NAME
+          FROM SAL_SDENCL_TB
+         WHERE ENCL_DELYN = 'N'
+           AND ENCL_CMPN_NO = #{ndmsCmpnNo}
+           AND ENCL_CORP_NO = #{ndmsCorpNo}
+         GROUP BY ENCL_GRP_CODE, ENCL_GRP_NAME
+    </select>
+
+    <!-- Lost Due To 정보 목록을 조회한다. -->
+    <select id="selectLostDueToSubCodeList" parameterType="ndmsMap" resultType="ndmsMap">
+        /* [CRMCSalesCustomerEnquiryDAO.selectLostDueToSubCodeList] */
+
+        SELECT ENCL_CODE AS CMM_CODE
+               ,ENCL_NAME AS CMM_CODE_NAME
+          FROM SAL_SDENCL_TB
+         WHERE ENCL_DELYN = 'N'
+           AND ENCL_CMPN_NO = #{ndmsCmpnNo}
+           AND ENCL_CORP_NO = #{ndmsCorpNo}
+           AND ENCL_GRP_CODE = #{grpCmmCode}
+         ORDER BY ENCL_CODE
+    </select>
+
+    <!-- update customer meeting -->
+    <update id="updateCustomerMeetingEnquiryInfo" parameterType="ndmsMap">
+    /* [CRMCCustomerMeetingDAO.updateCustomerMeetingEnquiryInfo] */
+
+        UPDATE CRM_SCEQRY_TB EQRY
+           SET  EQRY.EQRY_PRESENT_CAR_YN = #{presentCar}
+               ,EQRY_EXCHG_YN = #{exchange}
+               ,EQRY_EXCHG_SRC_CODE = #{exchangeSrc}
+               ,EQRY_MAKER_CODE = #{exchangeMaker}
+               ,EQRY_EXCHG_MODEL_CODE = #{modelUc}
+               ,EQRY_QUOTD_PRICE = #{quotedPrice}
+               ,EQRY_EXPCT_PRICE = #{expectedPrice}
+               ,EQRY_P_MODL_YEAR = #{modelYear}
+               ,EQRY_FNCE_YN = #{financeReqYn}
+               ,EQRY_FNCER_CODE = #{financier}
+               ,EQRY_ASSOCIATE_ID = #{associateNo}
+               ,EQRY_LOAN_AMT = #{loanAmount}
+               ,EQRY_EMP_NO   = #{salesConsultant}
+               ,EQRY_FCALL_EMP_NO = #{perInChar}
+               ,EQRY_UPDT_EMP_NO = #{crdtEmpNo}
+               ,EQRY_UPDT_DTIME  = SYSDATE
+         WHERE EQRY.EQRY_DLR_NO = #{dlrNo}
+           AND EQRY.EQRY_CUST_NO = #{custNo}
+           AND EQRY.EQRY_CORP_NO = #{ndmsCorpNo}
+           AND EQRY.EQRY_CMPN_NO = #{ndmsCmpnNo}
+           AND EQRY.EQRY_ENQRY_NO = #{enqryNo}
+
+    </update>
+
+
+    <!-- update customer meeting cancel-->
+    <update id="updateCustomerEnquiryCancel" parameterType="ndmsMap">
+    /* [CRMCCustomerMeetingDAO.updateCustomerEnquiryCancel] */
+
+        UPDATE CRM_SCEQRY_TB EQRY
+           SET EQRY.EQRY_CLSE_GRP_TYPE = #{eqryClseGrpType}
+               ,EQRY.EQRY_CLSE_TYPE = #{eqryClseType}
+               ,EQRY.EQRY_RSO_ID = #{eqryRsoId}
+               ,EQRY.EQRY_CLSE_RMRKS = #{eqryClseRmrks}
+               ,EQRY.EQRY_CLSE_DATE = #{eqryClseDate}
+               ,EQRY.EQRY_STAT = CONCAT('5', SUBSTR(EQRY.EQRY_STAT, 2, 1))
+               ,EQRY_UPDT_EMP_NO = #{crdtEmpNo}
+               ,EQRY_UPDT_DTIME  = SYSDATE
+         WHERE EQRY.EQRY_DLR_NO = #{dlrNo}
+           AND EQRY.EQRY_CUST_NO = #{custNo}
+           AND EQRY.EQRY_CORP_NO = #{ndmsCorpNo}
+           AND EQRY.EQRY_CMPN_NO = #{ndmsCmpnNo}
+           AND EQRY.EQRY_ENQRY_NO = #{enqryNo}
+
+    </update>
+
+    <!-- update customer meeting -->
+    <update id="updateCustomerMeetingCarInfo" parameterType="ndmsMap">
+    /* [CRMCCustomerMeetingDAO.updateCustomerMeetingCarInfo] */
+
+        UPDATE CRM_SCEQCR_TB EQCR
+           SET EQCR.EQCR_MODEL_CODE = #{model}
+                 ,EQCR.EQCR_VRNT_CODE = #{variantSub}
+                 ,EQCR.EQCR_FUEL_TYPE = #{fuelType}
+                 ,EQCR.EQCR_COLOR_CODE = #{extColor}
+                 ,EQCR.EQCR_INT_COLOR_CODE = #{intColor}
+                 ,EQCR_UPDT_EMP_NO = #{crdtEmpNo}
+              ,EQCR_UPDT_DTIME  = SYSDATE
+         WHERE EQCR.EQCR_DLR_NO = #{dlrNo}
+           AND EQCR.EQCR_CORP_NO = #{ndmsCorpNo}
+           AND EQCR.EQCR_CMPN_NO = #{ndmsCmpnNo}
+           AND EQCR.EQCR_ENQRY_NO = #{enqryNo}
+           AND EQCR.EQCR_SEQ = '001'
+
+    </update>
+
+
+
+    <select id="selectCustomerMeetingFollowUpMaxSeq" parameterType="ndmsMap" resultType="ndmsMap">
+      /* [CRMCSalesCustomerEnquiryDAO.selectCustomerMeetingFollowUpMaxSeq] */
+        SELECT LPAD(NVL(MAX(EQFU_SEQ), 0) + 1, 3, '0') AS SEQ
+                        FROM CRM_SCEQFU_TB
+                       WHERE EQFU_CORP_NO = #{ndmsCorpNo}
+                         AND EQFU_CMPN_NO = #{ndmsCmpnNo}
+                         AND EQFU_DLR_NO = #{dlrNo}
+                         AND EQFU_ENQRY_NO = #{enqryNo}
+    </select>
+
+    <!-- insert customer meeting FollowUp-->
+    <insert id="insertCustomerMeetingFollowUp" parameterType="ndmsMap">
+        /* [CRMCCustomerMeetingDAO.insertCustomerMeetingFollow] */
+        INSERT INTO CRM_SCEQFU_TB(
+             EQFU_DLR_NO
+            ,EQFU_ENQRY_NO
+            ,EQFU_SEQ
+            ,EQFU_CORP_NO
+            ,EQFU_CMPN_NO
+            ,EQFU_DATE
+            ,EQFU_TIME
+            ,EQFU_NTFU_DATE
+            ,EQFU_NTFU_TIME
+            ,EQFU_NTFU_DONE_YN
+            ,EQFU_AFTR_ENQRY_TYPE
+            ,EQFU_BFRE_ENQRY_TYPE
+            ,EQFU_RMRKS
+            ,EQFU_FLUP_TYPE
+            ,EQFU_VERIFI_YN
+            ,EQFU_NTFU_TYPE
+            ,INFECT_RSON
+            ,EQFU_CRTE_DTIME
+            ,EQFU_CRTE_EMP_NO
+            ,EQFU_UPDT_DTIME
+            ,EQFU_UPDT_EMP_NO)
+        VALUES(
+             #{dlrNo}
+            ,#{enqryNo}
+            ,#{fuSeq}
+            ,#{ndmsCorpNo}
+            ,#{ndmsCmpnNo}
+            ,#{eqfuDate}
+            ,#{eqfuTime}
+            ,#{eqfuNfDate}
+            ,#{eqfuNfTime}
+            ,'N'
+            ,#{eqfuAftrEnqryType}
+            ,#{eqfuAftrEnqryType}
+            ,#{eqfuRmrks}
+            ,#{eqfuFlupType}
+            ,#{eqfuVerif}
+            ,#{eqfuNtfuType}
+            ,#{infectRson}
+            ,SYSDATE
+            ,#{crdtEmpNo}
+            ,SYSDATE
+            ,#{crdtEmpNo})
+    </insert>
+
+    <update id="updateEnquiryInfo" parameterType="ndmsMap">
+    /* [CRMCCustomerMeetingDAO.updateEnquiryInfo] */
+        UPDATE CRM_SCEQRY_TB EQRY SET
+           EQRY.EQRY_TYPE = #{eqfuAftrEnqryType}
+           ,EQRY.EQRY_EQFU_SEQ = #{fuSeq}
+         WHERE EQRY.EQRY_DLR_NO = #{dlrNo}
+           AND EQRY.EQRY_CORP_NO = #{ndmsCorpNo}
+           AND EQRY.EQRY_CMPN_NO = #{ndmsCmpnNo}
+           AND EQRY.EQRY_ENQRY_NO  = #{enqryNo}
+
+    </update>
+
+    <insert id="insertUsedCarEnquiry" parameterType="ndmsMap">
+    /* [CRMCCustomerMeetingDAO.insertUsedCarEnquiry] */
+         <selectKey resultType="string" keyProperty="enquriyNo" order="BEFORE">
+          SELECT 'O' || (NVL(TO_CHAR(MAX(SUBSTR(EQRY_ENQRY_NO,2))) , TO_CHAR(SYSDATE , 'YYYY') || '00000' ) + 1) AS
+            FROM SAL_OCEQRY_TB
+            WHERE EQRY_ENQRY_NO LIKE  'O' || TO_CHAR(SYSDATE , 'YYYY') || '%'
+        </selectKey>
+
+       INSERT INTO SAL_OCEQRY_TB (
+                  EQRY_DLR_NO                  --Dealer Number
+                 ,EQRY_ENQRY_NO                --EQRY_ENQRY_NO
+                 ,EQRY_CORP_NO                 --EQRY_CORP_NO
+                 ,EQRY_CMPN_NO                 --EQRY_CMPN_NO
+                 ,EQRY_DATE                    --EQRY_DATE
+                 ,EQRY_SRC_CODE                --EQRY_SRC_CODE
+                 ,EQRY_STAT                    --EQRY_STAT
+                 ,EQRY_TYPE                    --EQRY_TYPE
+                 ,EQRY_NEW_CAR                 --EQRY_NEW_CAR
+                 ,EQRY_QUOTD_PRICE             --EQRY_QUOTD_PRICE
+                 ,EQRY_EXPCT_PRICE             --EQRY_EXPCT_PRICE
+                 ,EQRY_CLSE_DATE               --EQRY_CLSE_DATE
+                 ,EQRY_CLSE_TYPE               --EQRY_CLSE_TYPE
+                 ,EQRY_CLSE_RMRKS              --EQRY_CLSE_RMRKS
+                 ,EQRY_EMP_NO                  --EQRY_EMP_NO
+                 ,EQRY_NEW_EMP_NO              --EQRY_NEW_EMP_NO
+                 ,EQRY_CUST_NO                 --EQRY_CUST_NO
+                 ,EQRY_LISTD_CORP              --EQRY_LISTD_CORP
+                 ,EQRY_CORP_NAME               --EQRY_CORP_NAME
+                 ,EQRY_RFRL_BY                 --EQRY_RFRL_BY
+                 ,EQRY_VHCL_RGSTN_NO           --EQRY_VHCL_RGSTN_NO
+                 ,EQRY_VHCL_RGSTN_DATE         --EQRY_VHCL_RGSTN_DATE
+                 ,EQRY_EQFU_SEQ                --EQRY_EQFU_SEQ
+                 ,EQRY_UPDT_DATE               --EQRY_UPDT_DATE
+                 ,EQRY_SR_NUM                  --EQRY_SR_NUM
+                 ,EQRY_SR_TYPE                 --EQRY_SR_TYPE
+                 ,EQRY_FLW_STATUS              --EQRY_FLW_STATUS
+                 ,EQRY_CRTE_DTIME              --EQRY_CRTE_DTIME
+                 ,EQRY_CRTE_EMP_NO             --EQRY_CRTE_EMP_NO
+                 ,EQRY_UPDT_DTIME              --EQRY_UPDT_DTIME
+                 ,EQRY_UPDT_EMP_NO             --EQRY_UPDT_EMP_NO
+                 ,EQRY_SUB_SRC_CODE            --Enquiry Sub Source
+                 ,EQRY_ATIVT_TYPE_CODE         --EQRY Activity Type Code
+                 ,EQRY_ATIVT_LOC_CODE          --EQRY Activity Location Code
+                  ,EQRY_NCE_YN                  --EQRY_NCE_YN
+                )
+                 VALUES	(
+                  #{dlrNo}              --Dealer Number-- mandatory
+                 ,#{enquriyNo}          --EQRY_ENQRY_NO-- mandatory
+                 ,#{ndmsCorpNo}         --EQRY_CORP_NO-- mandatory
+                 ,#{ndmsCmpnNo}         --EQRY_CMPN_NO-- mandatory
+                 ,TO_CHAR(SYSDATE, 'YYYYMMDD')		        --EQRY_DATE-- mandatory
+                 ,#{usedEqrySource}            --EQRY_SRC_CODE-- mandatory
+                 ,'10'                  --EQRY_STAT-- mandatory
+                 ,#{eqryType}           --EQRY_TYPE
+                 ,'Y'		         	--EQRY_NEW_CAR
+                 ,#{quotedPrice}        --EQRY_QUOTD_PRICE
+                 ,#{expectedPrice}      --EQRY_EXPCT_PRICE
+                 ,''                	--EQRY_CLSE_DATE
+                 ,#{eqryClseType}       --EQRY_CLSE_TYPE
+                 ,#{eqryClseRmrks}      --EQRY_CLSE_RMRKS
+                 ,#{crdtEmpNo}          --EQRY_EMP_NO -- mandatory??
+                 ,#{crdtEmpNo}      	--EQRY_NEW_EMP_NO -- mandatory
+                 ,#{custNo}             --EQRY_CUST_NO -- mandatory
+                 ,''               		--EQRY_LISTD_CORP
+                 ,''                	--EQRY_CORP_NAME
+                 ,''		            --EQRY_RFRL_BY
+                 ,''          			--EQRY_VHCL_RGSTN_NO
+                 ,''           			--EQRY_VHCL_RGSTN_DATE
+                 ,'001'                 --EQRY_EQFU_SEQ -- mandatory
+                 ,''                	--EQRY_UPDT_DATE
+                 ,''                   	--EQRY_SR_NUM
+                 ,''                  	--EQRY_SR_TYPE
+                 ,'N'               	--EQRY_FLW_STATUS  -- mandatory
+                 ,SYSDATE               --EQRY_CRTE_DTIME
+                 ,#{crdtEmpNo}          --EQRY_CRTE_EMP_NO
+                 ,SYSDATE               --EQRY_UPDT_DTIME
+                 ,#{crdtEmpNo}          --EQRY_UPDT_EMP_NO
+                 ,#{usedEqrySubSource}         --Enquiry Sub Source-- mandatory
+                 ,''			        --EQRY Activity Type Code
+                 ,''                    --EQRY Activity Location Code
+         ,'Y'                   --EQRY_NCE_YN
+                )
+
+    </insert>
+
+    <insert id="insertUsedCarInfo" parameterType="ndmsMap">
+    /* [CRMCCustomerMeetingDAO.insertUsedCarInfo] */
+
+     INSERT INTO SAL_OCEQCR_TB(
+                  EQCR_DLR_NO               --EQCR_DLR_NO
+                 ,EQCR_ENQRY_NO             --EQCR_ENQRY_NO
+                 ,EQCR_SEQ                  --EQCR_SEQ
+                 ,EQCR_CORP_NO              --EQCR_CORP_NO
+                 ,EQCR_CMPN_NO              --EQCR_CMPN_NO
+                 ,EQCR_MAKER_CODE           --EQCR_MAKER_CODE
+                 ,EQCR_MODEL_CODE           --EQCR_MODEL_CODE
+                 ,EQCR_VRNT_CODE            --EQCR_VRNT_CODE
+                 ,EQCR_COLOR_CODE           --EQCR_COLOR_CODE
+                 ,EQCR_QTY                  --EQCR_QTY
+                 ,EQCR_CRTE_DTIME           --EQCR_CRTE_DTIME
+                 ,EQCR_CRTE_EMP_NO          --EQCR_CRTE_EMP_NO
+                 ,EQCR_UPDT_DTIME           --EQCR_UPDT_DTIME
+                 ,EQCR_UPDT_EMP_NO          --EQCR_UPDT_EMP_NO
+                 ,EQCR_FUEL_TYPE            --EQCR Fuel type
+                 ,EQCR_NC_MODEL_CODE        --EQCR New Car Model Code
+                )
+                 VALUES	(
+                  #{dlrNo}                --EQCR_DLR_NO    -- mandatory
+                 ,#{enquriyNo}              --EQCR_ENQRY_NO  -- mandatory
+                 ,'001'                  --EQCR_SEQ    -- mandatory
+                 ,#{ndmsCorpNo}               --EQCR_CORP_NO  -- mandatory
+                 ,#{ndmsCmpnNo}               --EQCR_CMPN_NO  -- mandatory
+                 ,#{exchangeMaker}            --EQCR_MAKER_CODE  -- mandatory
+                 ,#{modelUc}            --EQCR_MODEL_CODE  -- mandatory
+                 ,null             --EQCR_VRNT_CODE
+                 ,null            --EQCR_COLOR_CODE
+                 ,'0'                  --EQCR_QTY
+                 ,SYSDATE            --EQCR_CRTE_DTIME
+                 ,#{crdtEmpNo}            --EQCR_CRTE_EMP_NO
+                 ,SYSDATE            --EQCR_UPDT_DTIME
+                 ,#{updtEmpNo}            --EQCR_UPDT_EMP_NO
+                 ,''             --EQCR Fuel type
+                 ,#{model}          --EQCR New Car Model Code
+                )
+
+    </insert>
+
+    <insert id="insertUsedCarFollowUp" parameterType="ndmsMap">
+    /* [CRMCCustomerMeetingDAO.insertUsedCarFollowUp] */
+
+       INSERT INTO SAL_OCEQFU_TB(
+                    EQFU_DLR_NO,
+                    EQFU_ENQRY_NO,
+                    EQFU_SEQ,
+                    EQFU_CORP_NO,
+                    EQFU_CMPN_NO,
+                    EQFU_DATE,
+                    EQFU_TIME,
+                    EQFU_NTFU_DATE,
+                    EQFU_NTFU_TIME,
+                    EQFU_NTFU_DONE_YN,
+                    EQFU_AFTR_ENQRY_TYPE,
+                    EQFU_BFRE_ENQRY_TYPE,
+                    EQFU_RMRKS,
+                    EQFU_CRTE_DTIME,
+                    EQFU_CRTE_EMP_NO,
+                    EQFU_UPDT_DTIME,
+                    EQFU_UPDT_EMP_NO,
+                    EQFU_OTHER_CMTD_RMRKS,
+                    EQFU_SCHME_RMRKS,
+                    EQFU_MNGER_CALL_DATE,
+                    EQFU_MNGER_REMRKS,
+                    EQFU_ACTIVE_YN,
+                    EQFU_STEP_CODE
+                    )
+  VALUES	(
+                    #{dlrNo}, -- mandatory
+                    #{enquriyNo}, -- mandatory
+                    '001',
+                    #{ndmsCorpNo},-- mandatory
+                    #{ndmsCmpnNo},-- mandatory
+                    TO_CHAR(SYSDATE, 'YYYYMMDD'), -- SYSDATE
+                    '000000',
+                    #{eqfuNfDate},
+                    '000000',
+                    'N',
+                    #{eqfuAftrEnqryType}, --/hot/warm/cold
+                    #{eqfuAftrEnqryType}, --/hot/warm/cold
+                    #{eqfuRmrks}, --Auto generation of sourcing enquiry for pre-owned car by retail
+                    SYSDATE,
+                    #{crdtEmpNo},
+                    SYSDATE,
+                    #{updtEmpNo},
+                    '',
+                    '',
+                    '',
+                    '',
+                    '',
+                    '10' -- mandatory
+                )
+
+    </insert>
+
+    <insert id="insertCustomerEnquiryMaster" parameterType="ndmsMap">
+    /* [CRMCSalesCustomerEnquiryInfoPopupDAO.insertCustomerEnquiryMaster] */
+
+        <selectKey resultType="string" keyProperty="enquriyNo" order="BEFORE">
+            SELECT 'E' || (NVL(TO_CHAR(MAX(SUBSTR(EQRY_ENQRY_NO,2))) , TO_CHAR(SYSDATE , 'YYYY') || '00000' ) + 1) AS
+                FROM CRM_SCEQRY_TB
+                WHERE EQRY_ENQRY_NO LIKE  'E' || TO_CHAR(SYSDATE , 'YYYY') || '%'
+        </selectKey>
+
+        INSERT INTO CRM_SCEQRY_TB (
+            EQRY_ENQRY_NO
+            , EQRY_DLR_NO
+            , EQRY_CORP_NO
+            , EQRY_CMPN_NO
+            , EQRY_DATE
+            , EQRY_SRC_CODE
+            , EQRY_STAT
+            , EQRY_TYPE
+            , EQRY_TEST_DRVR_DATE
+            , EQRY_FNCE_YN
+            , EQRY_FNCER_CODE
+            , EQRY_LOAN_AMT
+            , EQRY_TENOR_MNTHS
+            , EQRY_EXCHG_YN
+            , EQRY_EXCHG_MODEL_CODE
+            , EQRY_EXCHG_SRC_CODE
+            , EQRY_EXPCT_PRICE
+            , EQRY_QUOTD_PRICE
+            , EQRY_CLSE_DATE
+            , EQRY_CLSE_TYPE
+            , EQRY_CLSE_RMRKS
+            , EQRY_EMP_NO
+            , EQRY_CUST_NO
+            , EQRY_LISTD_CORP
+            , EQRY_CORP_NAME
+            , EQRY_RFRL_BY
+            , EQRY_CRTE_DTIME
+            , EQRY_CRTE_EMP_NO
+            , EQRY_UPDT_DTIME
+            , EQRY_UPDT_EMP_NO
+            , EQRY_EQFU_SEQ
+            , EQRY_UPDT_DATE
+            , EQRY_TEST_DRIVE_YN
+            , EQRY_SR_NUM
+            , EQRY_SR_TYPE
+            , EQRY_FLW_STATUS
+            , EQRY_ASSOCIATE_ID
+            , EQRY_RSO_ID
+            , EQRY_FUEL_TYPE
+            , EQRY_PRESENT_CAR_YN
+            , EQRY_MAKER_CODE
+            , EQRY_TD_VIN
+            , EQRY_CUST_BLOCK
+            , EQRY_BULK_SALE
+            , EQRY_P_MODL_YEAR
+            , EQRY_CLS_VAL
+            , EQRY_INCOM_GROUP
+            , EQRY_REFL_ID
+            , EQRY_REFL_PUNCH_DLR_NO
+            , EQRY_PLAN_DATE
+            , EQRY_ATIVT_NAME_CODE
+            , EQRY_ATIVT_LOC_CODE
+            , EQRY_NEWCAR_YN
+            , EQRY_FCALL_EMP_NO
+            , EQRY_APNT_DTIME
+            , VIST_DTIME
+            , LEAV_DTIME
+            , EQRY_CTGR_CODE
+            , EQRY_SUB_SRC_CODE
+            )
+        VALUES
+            (
+            #{enquriyNo}
+            , #{dlrNo}
+            , #{ndmsCorpNo}
+            , #{ndmsCmpnNo}
+            , TO_CHAR(SYSDATE, 'YYYYMMDD')
+            , #{eqrySrc}
+            , '09'
+            , #{eqryType}
+            , ''
+            , #{financeReqYn}
+            , #{financier}
+            , #{loanAmount}
+            , 0
+            , #{exchange}
+            , #{modelUc}
+            , #{exchangeSrc}
+            , #{expectedPrice}
+            , #{quotedPrice}
+            , ''
+            , ''
+            , ''
+            , #{salesConsultant}
+            , #{custNo}
+            , #{corpCode}
+            , #{eqryCorpName}
+            , ''
+            , SYSDATE
+            , #{crdtEmpNo}
+            , SYSDATE
+            , #{updtEmpNo}
+            , #{fuSeq}
+            , ''
+            , ''
+            , ''
+            , ''
+            , ''
+            , #{associateNo}
+            , ''
+            , #{fuelType}
+            , #{presentCar}
+            , #{exchangeMaker}
+            , ''
+            , ''
+            , ''
+            , #{modelYear}
+            , ''
+            , ''
+            , ''
+            , ''
+            , ''
+            , ''
+            , ''
+            , 'Y'
+            , #{perInChar}
+            , NULL
+            , NULL
+            , NULL
+            , #{eqryCate}
+            , #{eqrySrcSub}
+            )
+
+
+    </insert>
+
+    <insert id="insertCustomerEnquiryCarInfo" parameterType="ndmsMap">
+    /* [CRMCSalesCustomerEnquiryInfoPopupDAO.insertCustomerEnquiryCarInfo] */
+
+        INSERT INTO CRM_SCEQCR_TB (
+            EQCR_ENQRY_NO
+            ,EQCR_DLR_NO
+            ,EQCR_CORP_NO
+            ,EQCR_CMPN_NO
+            ,EQCR_SEQ
+            ,EQCR_MODEL_CODE
+            ,EQCR_VRNT_CODE
+            ,EQCR_COLOR_CODE
+            ,EQCR_QTY
+            ,EQCR_CRTE_DTIME
+            ,EQCR_CRTE_EMP_NO
+            ,EQCR_UPDT_DTIME
+            ,EQCR_UPDT_EMP_NO
+            ,EQCR_INT_COLOR_CODE
+            ,EQCR_MAKER_CODE
+            ,EQCR_FUEL_TYPE
+            )
+        VALUES
+            (
+            #{enquriyNo}
+            , #{dlrNo}
+            , #{ndmsCorpNo}
+            , #{ndmsCmpnNo}
+            , '001'
+            , #{modelCode}
+            , #{vrntSub}
+            , #{extColor}
+            , 1
+            , SYSDATE
+            , #{crdtEmpNo}
+            , SYSDATE
+            , #{updtEmpNo}
+            , #{intColor}
+            , ''
+            , #{fuelType}
+            )
+
+    </insert>
+
+    <insert id="insertCustomerEnquiryFollowUpAutoCreate" parameterType="ndmsMap">
+    /* [CRMCSalesCustomerEnquiryInfoPopupDAO.insertCustomerEnquiryFollowUpAutoCreate] */
+        INSERT INTO CRM_SCEQFU_TB(
+             EQFU_DLR_NO
+            ,EQFU_ENQRY_NO
+            ,EQFU_SEQ
+            ,EQFU_CORP_NO
+            ,EQFU_CMPN_NO
+            ,EQFU_DATE
+            ,EQFU_TIME
+            ,EQFU_BFRE_ENQRY_TYPE
+            ,EQFU_AFTR_ENQRY_TYPE
+            ,EQFU_FLUP_TYPE
+            ,EQFU_VERIFI_YN
+            ,EQFU_CRTE_DTIME
+            ,EQFU_CRTE_EMP_NO
+            ,EQFU_UPDT_DTIME
+            ,EQFU_UPDT_EMP_NO
+            )
+        VALUES
+            (
+             #{dlrNo}
+            ,#{enquriyNo}
+            ,#{fuSeq}
+            ,#{ndmsCorpNo}
+            ,#{ndmsCmpnNo}
+            ,TO_CHAR(SYSDATE,'YYYYMMDD')
+            ,TO_CHAR(SYSDATE, 'HH24') || '00' || '00'
+            ,#{eqryType}
+            ,#{eqryType}
+            ,'S'
+            ,'Y'
+            ,SYSDATE
+            ,#{crdtEmpNo}
+            ,SYSDATE
+            ,#{crdtEmpNo}
+            )
+    </insert>
+</mapper>

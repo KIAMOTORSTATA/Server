@@ -1,0 +1,430 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!--
+    SQL File Name : SALGFIFOBookingAllocationMainDAO.xml
+    Description : FIFOBookingAllocation
+    author Daniel Cho
+    since 2018. 10. 08.
+    version 1.0
+    Modification Information
+       since          author              description
+    ===========    =============    ===========================
+    2018. 10. 08.  Daniel Cho
+-->
+
+<mapper namespace="SALGFIFOBookingAllocationMainDAO">
+
+	<select id="selectsLAGVariantGroupSearch" parameterType="ndmsMap" resultType="ndmsMap">
+		 /* [SALGFIFOBookingAllocationMainDAO.selectsLAGVariantGroupSearch] */
+		 SELECT
+		 	VRNT_GRP_DSCTN AS VRNT_CODE
+		 	, VRNT_GRP_DSCTN AS VRNT_CODE_NAME
+		   FROM SAL_SSVRNT_TB, SAL_SISPEC_TB
+		  WHERE 1=1
+		    AND VRNT_CMPN_NO = SPEC_CMPN_NO
+		    AND VRNT_CORP_NO = SPEC_CORP_NO
+		    AND VRNT_SPEC_CODE = SPEC_CODE
+		    AND VRNT_CMPN_NO = #{ndmsCmpnNo}
+		    AND VRNT_CORP_NO = #{ndmsCorpNo}
+		    AND VRNT_MODEL_CODE = #{sModelCd}
+		 GROUP BY VRNT_GRP_DSCTN
+		 ORDER BY VRNT_GRP_DSCTN
+	</select>
+
+
+	<select id="selectsLAGVariantSearch" parameterType="ndmsMap" resultType="ndmsMap">
+	/* [SALGFIFOBookingAllocationMainDAO.selectsLAGVariantSearch] */
+		SELECT DISTINCT  TRIM (VRNT_CODE) AS VRNT_CODE
+		     , TRIM (VRNT_DSCTN) AS VRNT_CODE_NAME
+		  FROM SAL_SSVRNT_TB
+		     , SAL_SWVHST_TB
+	     WHERE   VRNT_CMPN_NO = #{ndmsCmpnNo}
+		   AND VRNT_CORP_NO = #{ndmsCorpNo}
+		   AND VRNT_GRP_DSCTN = #{sGrpVrntCd}
+		   AND VRNT_MODEL_CODE = #{sModelCd}
+		   AND VRNT_USE_YN = 'Y'
+		   AND VHST_MODEL_CODE = VRNT_MODEL_CODE
+		   AND VHST_VRNT_CODE = VRNT_CODE
+		   AND VHST_STAT in ('10','80','85','90')
+		ORDER BY VRNT_CODE_NAME
+	</select>
+
+	<select id="selectFamilyVrntColor" parameterType="ndmsMap" resultType="ndmsMap">
+	/* [SALGFIFOBookingAllocationMainDAO.selectFamilyVrntColor] */
+		SELECT VRNT_CLR_FAMILY
+		  FROM SAL_SSVRNT_TB
+		 WHERE VRNT_CODE = #{sVrntCode}
+	</select>
+
+	<select id="selectExtColorFamilySearch" parameterType="ndmsMap" resultType="ndmsMap">
+	/* [SALGFIFOBookingAllocationMainDAO.selectExtColorFamilySearch] */
+			SELECT A.COLR_CODE AS EXT_COLR_CODE
+			     , A.COLR_FULL_DSCTN AS EXT_COLR_NAME
+			  FROM SAL_SSCOLR_TB A
+			     , SAL_SICCMP_TB B
+			     , SAL_SSCLFM_TB C
+			 WHERE 1=1
+			   AND A.COLR_CORP_NO = B.CCMP_CORP_NO
+			   AND A.COLR_CMPN_NO = B.CCMP_CMPN_NO
+			   AND A.COLR_CODE    = B.CCMP_COLR_CODE
+			   AND B.CCMP_CMPN_NO = C.CLFM_CMPN_NO
+			   AND B.CCMP_CORP_NO = C.CLFM_CORP_NO
+			   AND TRIM(B.CCMP_COLR_CODE) = TRIM(C.CLFM_EXT_COLR)
+			   AND B.CCMP_MODEL_CODE = C.CLFM_CAR_LINE
+			   AND B.CCMP_MODEL_CODE = #{sModelCd}
+			   AND B.CCMP_CORP_NO = #{ndmsCorpNo}
+			   AND B.CCMP_CMPN_NO = #{ndmsCmpnNo}
+			   AND A.COLR_STAT = 'Y'
+			   AND TRIM(C.CLFM_COLR_FAMILY) = #{vrntClrFamily}
+			ORDER BY A.COLR_FULL_DSCTN
+	</select>
+
+	<select id="selectExtColorSearch" parameterType="ndmsMap" resultType="ndmsMap">
+	/* [SALGFIFOBookingAllocationMainDAO.selectExtColorSearch] */
+        SELECT A.COLR_CODE AS EXT_COLR_CODE
+             , A.COLR_FULL_DSCTN AS EXT_COLR_NAME
+		  FROM SAL_SSCOLR_TB A
+		     , SAL_SICCMP_TB B
+		 WHERE 1=1
+		   AND A.COLR_CORP_NO = B.CCMP_CORP_NO
+		   AND A.COLR_CMPN_NO = B.CCMP_CMPN_NO
+		   AND A.COLR_CODE    = B.CCMP_COLR_CODE
+		   AND B.CCMP_MODEL_CODE = #{sModelCd}
+		   AND B.CCMP_CORP_NO = #{ndmsCorpNo}
+		   AND B.CCMP_CMPN_NO = #{ndmsCmpnNo}
+		   AND A.COLR_STAT    = 'Y'
+		 ORDER BY A.COLR_FULL_DSCTN
+	</select>
+
+
+
+
+	<select id="selectsALGFIFOBookingAllocationMainGrid" parameterType="ndmsMap" resultType="ndmsMap">
+		/* [SALGFIFOBookingAllocationMainDAO.selectsALGFIFOBookingAllocationMainGrid] */
+		SELECT T1.*
+		     , FNC_GET_CODE_NAME('DC00021', T1.DLRM_RGN_OFCE_NO, #{sLangCd}) AS REGION_NM
+		     , (
+		       	 SELECT MODL_FULL_DSCTN
+		           FROM SAL_SSMODL_TB
+		          WHERE MODL_CORP_NO = T1.EQRY_CORP_NO
+		            AND MODL_CMPN_NO = T1.EQRY_CMPN_NO
+		            AND MODL_MODEL_CODE = T1.EQCR_MODEL_CODE
+		        ) AS MODEL_NAME
+		     , (
+		         SELECT VRNT_DSCTN AS VRNT_NM
+		           FROM SAL_SSVRNT_TB
+		         WHERE 1 = 1
+		           AND VRNT_CODE    = T1.EQCR_VRNT_CODE
+				   AND VRNT_CORP_NO = T1.EQRY_CORP_NO
+				   AND VRNT_CMPN_NO = T1.EQRY_CMPN_NO
+		       ) AS VRNT_NM
+		     , (
+		         SELECT B.SPEC_CODE AS SPEC_CODE
+		           FROM SAL_SSVRNT_TB A
+		              , SAL_SISPEC_TB B
+		         WHERE 1 = 1
+		           AND A.VRNT_CMPN_NO = C.SPEC_CMPN_NO
+				   AND A.VRNT_CORP_NO = C.SPEC_CORP_NO
+				   AND A.VRNT_SPEC_CODE = C.SPEC_CODE
+		           AND A.VRNT_CODE    = T1.EQCR_VRNT_CODE
+				   AND A.VRNT_CORP_NO = T1.EQRY_CORP_NO
+				   AND A.VRNT_CMPN_NO = T1.EQRY_CMPN_NO
+		       ) AS SPEC_CODE
+		     , (
+			    SELECT COLR_FULL_DSCTN AS EXT_COLOR_NM
+			      FROM SAL_SSCOLR_TB
+			    WHERE 1 = 1
+			      AND COLR_CODE    = T1.EQCR_COLOR_CODE
+				  AND COLR_CORP_NO = T1.EQRY_CORP_NO
+				  AND COLR_CMPN_NO = T1.EQRY_CMPN_NO
+			   ) AS EXT_COLOR_NM
+		     , (
+		         SELECT MAX(INTCL_INT_COLOR_DESC) AS INT_COLOR_NM
+		           FROM SAL_SSINTCL_TB
+		          WHERE 1=1
+		            AND INTCL_CMPN_NO = T1.EQRY_CMPN_NO
+		            AND INTCL_CORP_NO = T1.EQRY_CORP_NO
+		            AND INTCL_MODEL_CODE = T1.EQCR_MODEL_CODE
+		            AND INTCL_EXT_COLOR_CODE = T1.EQCR_COLOR_CODE
+		            AND INTCL_INT_COLOR_CODE = T1.EQCR_INT_COLOR_CODE
+		            AND USED_YN = 'Y'
+			   ) AS INT_COLOR_NAME
+		  FROM(
+		        SELECT ROW_NUMBER() OVER(ORDER BY CSPM_CUST_NO ASC) AS RNUM
+		             , A.EQRY_CMPN_NO
+					 , A.EQRY_CORP_NO
+		             , H.DLRM_RGN_OFCE_NO
+		             , H.DLRM_SPR_DLR_CODE    AS MAIN_DEALER
+		             , H.DLRM_DLR_CODE        AS DEALER_CD
+		             , B.BKNG_DLR_NO 	      AS DLR_NO
+				     , C.DORG_TRADE_DSCTN     AS DEALER_NM
+				     , E.EQCR_MODEL_CODE
+					 , E.EQCR_FUEL_TYPE
+					 , E.EQCR_VRNT_CODE
+					 , E.EQCR_COLOR_CODE
+					 , E.EQCR_INT_COLOR_CODE
+		             , TO_DATE(B.BKNG_DATE, 'YYYYMMDD') AS BKNG_DATE
+		             
+		             , (SELECT VHST_VIN
+		                  FROM  (
+			               		 SELECT VHST_VIN
+			               		   FROM SAL_SWVHST_TB
+			               		  WHERE VHST_DLR_NO = {dlrNo}
+			               		    AND VHST_STAT = '10'
+			               		    AND VHST_MODEL_CODE = {sModelCd}
+			               		    AND VHST_VRNT_CODE = {sSubVariantCd}
+					                AND VHST_COLR_CODE = {sExtColorCd}
+					                AND VHST_DEALLOCATION_YN IS NULL
+					              ORDER BY VHST_SIGN_OFF_DATE, VHST_VIN
+				               )
+				         WHERE  ROWNUM = 1
+				        ) AS VHST_VIN
+				      
+				       , FNC_GET_FIND_VHST_VIN({dlrNo}, {sModelCd}, {sSubVariantCd}, {sExtColorCd}, #{sIntColorCd}) AS VHST_VIN
+		               , A.EQRY_ENQRY_NO   AS ENQRY_NO
+		               , A.EQRY_SR_NUM     AS EQRY_SR_NUM
+		               , A.EQRY_SR_TYPE    AS EQRY_SR_TYPE
+		               , A.EQRY_CUST_NO
+		               , D.CSPM_CUST_FULL_NAME    AS CUST_NM
+		               , (D2.CUDT_PADDR1 || D2.CUDT_PADDR2 || D2.CUDT_PADDR3) AS ADDRESS
+				       , D3.ADDR
+				       , D3.STCD_CODE		AS STATE
+				       , D3.CITY_CODE		AS CITY
+				       , D3.DSTRT_CODE
+				       , D3.PIN_CODE
+				       , D3.VILL_NAME
+				       , D3.LCTY_CODE
+				       , D.CSPM_EMAIL
+				       , D.M_MOBL_PHONE_NO
+					   , D.S_MOBL_PHONE_NO
+					   , D.CSPM_RESDC_PHONE_NO
+		               , (SELECT SUM(RCPT_AMT)
+		                    FROM SAL_SARCPT_TB
+		                   WHERE RCPT_DLR_NO = B.BKNG_DLR_NO
+				             AND (RCPT_REFUND_CHK IS NULL OR RCPT_REFUND_CHK = '0')
+		                     AND RCPT_CORP_NO = B.BKNG_CORP_NO
+				             AND RCPT_CMPN_NO = B.BKNG_CMPN_NO
+		                     AND RCPT_BKNG_NO = B.BKNG_NO
+		                     AND RCPT_DELT_YN = 'N'
+				             AND RCPT_ACCNT_NO = '10'
+				         )     AS BOOKING_AMOUNT
+		               , (SELECT EMPM_EMP_NAME
+		                    FROM CMM_CAEMPM_TB
+		                   WHERE EMPM_CMPN_NO = A.EQRY_CMPN_NO
+		                     AND EMPM_CORP_NO = A.EQRY_CORP_NO
+		                     AND EMPM_DLR_NO  = A.EQRY_DLR_NO
+				             AND EMPM_EMP_NO  = A.EQRY_EMP_NO
+				         )     AS CONSULTANT_NAME
+		               , A.EQRY_SRC_CODE      AS ENQUIRY_SOURCE
+		               , A.EQRY_SUB_SRC_CODE  AS ENQUIRY_SUB_SOURCE
+				       , A.EQRY_TEST_DRIVE_YN AS EQRY_TEST_DRIVE_YN
+				       , A.EQRY_CUST_BLOCK
+				       , B.BKNG_CRTE_DTIME    AS BKNG_CR_DT
+		          FROM CRM_SCEQRY_TB A
+					 , SAL_SOBKNG_TB B
+					 , CMM_CADORG_TB C	-- 딜러
+					 , CRM_CDCSPM_TB D	-- 고객정보
+					 , CRM_CDCUDT_TB D2 -- 개인정보
+					 , CRM_CDCUAD_TB D3 -- 고객주소
+					 , CRM_SCEQCR_TB E  -- 고객차량
+		             , (
+		                SELECT EQCR_CMPN_NO
+		                     , EQCR_CORP_NO
+		                     , EQCR_DLR_NO
+		                     , EQCR_ENQRY_NO
+		                     , MIN(EQCR_SEQ) AS EQCR_SEQ
+		                  FROM CRM_SCEQCR_TB
+		                 WHERE EQCR_CMPN_NO = #{ndmsCmpnNo}
+		                   AND EQCR_CORP_NO = #{ndmsCorpNo}
+		                   AND EQCR_DLR_NO = #{dlrNo}
+		                 GROUP BY EQCR_CMPN_NO, EQCR_CORP_NO, EQCR_DLR_NO, EQCR_ENQRY_NO
+		               ) E2
+					 , CMM_CADLRM_TB H
+		         WHERE A.EQRY_CMPN_NO  = B.BKNG_CMPN_NO
+		           AND A.EQRY_CORP_NO  = B.BKNG_CORP_NO
+				   AND A.EQRY_DLR_NO   = B.BKNG_DLR_NO
+				   AND A.EQRY_ENQRY_NO = B.BKNG_ENQRY_NO
+		           AND A.EQRY_STAT = '20'
+				   AND (A.EQRY_CUST_BLOCK IS NULL OR A.EQRY_CUST_BLOCK = 'N')
+				   AND A.EQRY_CMPN_NO = C.DORG_CMPN_NO
+				   AND A.EQRY_CORP_NO = C.DORG_CORP_NO
+				   AND A.EQRY_DLR_NO  = C.DORG_DLR_NO
+				   AND C.DORG_SCTN_TYPE = 'S'
+		           AND A.EQRY_CMPN_NO = D.CSPM_CMPN_NO
+				   AND A.EQRY_CORP_NO = D.CSPM_CORP_NO
+				   AND A.EQRY_DLR_NO  = D.CSPM_DLR_NO
+				   AND A.EQRY_CUST_NO = D.CSPM_CUST_NO
+				   AND A.EQRY_DLR_NO  = D2.CUDT_DLR_NO(+)
+				   AND A.EQRY_CORP_NO = D2.CUDT_CORP_NO(+)
+				   AND A.EQRY_CMPN_NO = D2.CUDT_CMPN_NO(+)
+				   AND A.EQRY_CUST_NO = D2.CUDT_CUST_NO(+)
+				   AND A.EQRY_CMPN_NO = D3.CMPN_NO(+)
+				   AND A.EQRY_CORP_NO = D3.CORP_NO(+)
+				   AND A.EQRY_DLR_NO  = D3.DLR_NO(+)
+				   AND A.EQRY_CUST_NO = D3.CUST_NO(+)
+				   AND D3.USED_YN(+) = 'Y'
+				   AND A.EQRY_CMPN_NO = E.EQCR_CMPN_NO
+				   AND A.EQRY_CORP_NO = E.EQCR_CORP_NO
+				   AND A.EQRY_DLR_NO = E.EQCR_DLR_NO
+				   AND A.EQRY_ENQRY_NO = E.EQCR_ENQRY_NO
+				   AND E.EQCR_CMPN_NO = E2.EQCR_CMPN_NO
+			       AND E.EQCR_CORP_NO = E2.EQCR_CORP_NO
+			       AND E.EQCR_DLR_NO = E2.EQCR_DLR_NO
+			       AND E.EQCR_ENQRY_NO = E2.EQCR_ENQRY_NO
+			       AND E.EQCR_SEQ = E2.EQCR_SEQ
+		           AND A.EQRY_CMPN_NO = H.DLRM_CMPN_NO(+)
+		           AND A.EQRY_CORP_NO = H.DLRM_CORP_NO(+)
+		           AND A.EQRY_DLR_NO = H.DLRM_DLR_NO(+)
+		        WHERE A.EQRY_CMPN_NO = #{ndmsCmpnNo}
+		          AND A.EQRY_CORP_NO = #{ndmsCorpNo}
+		          AND A.EQRY_DLR_NO  = #{dlrNo}
+		        <if test='sModelCd != null and sModelCd != ""'>
+		          AND E.EQCR_MODEL_CODE = #{sModelCd}
+		        </if>
+		        <if test='sSubVariantCd != null and sSubVariantCd != ""'>
+		          AND E.EQCR_VRNT_CODE = #{sSubVariantCd}
+		        </if>
+		        <if test='sExtColorCd != null and sExtColorCd != ""'>
+		          AND E.EQCR_COLOR_CODE = #{sExtColorCd}
+		        </if>
+		        <if test='sIntColorCd != null and sIntColorCd != ""'>
+		          AND E.EQCR_INT_COLOR_CODE = #{sIntColorCd}
+		        </if>
+		        ORDER  BY B.BKNG_CRTE_DTIME ASC
+		     ) T1
+	     WHERE ROWNUM = 1
+	</select>
+
+
+	<select id="selectCheckBookingExist" parameterType="ndmsMap" resultType="ndmsMap">
+	/* [SALGFIFOBookingAllocationMainDAO.selectCheckBookingExist] */
+		 SELECT A.EQRY_STAT
+		      , C.BKNG_NO
+              , B.EQCR_MODEL_CODE
+              , B.EQCR_VRNT_CODE
+              , B.EQCR_COLOR_CODE
+              , B.EQCR_INT_COLOR_CODE
+              , D.INVC_VIN_NO
+		   FROM CRM_SCEQRY_TB a
+              , CRM_SCEQCR_TB B  -- 고객차량
+              , (
+                  SELECT EQCR_CMPN_NO
+                       , EQCR_CORP_NO
+                       , EQCR_DLR_NO
+                       , EQCR_ENQRY_NO
+                       , MIN(EQCR_SEQ) AS EQCR_SEQ
+                    FROM CRM_SCEQCR_TB
+                   WHERE EQCR_CMPN_NO = #{ndmsCmpnNo}
+                     AND EQCR_CORP_NO = #{ndmsCorpNo}
+                     AND EQCR_DLR_NO = #{dlrNo}
+                     AND EQCR_ENQRY_NO = #{eqryNo}
+                   GROUP BY EQCR_CMPN_NO, EQCR_CORP_NO, EQCR_DLR_NO, EQCR_ENQRY_NO
+                ) B2
+		      , SAL_SOBKNG_TB C
+              , SAL_SWINVC_TB D
+              , (
+                  SELECT INVC_CORP_NO
+                       , INVC_CMPN_NO
+                       , INVC_DLR_NO
+                       , INVC_BKNG_NO
+                       , INVC_ENQRY_NO
+                       , MAX(INVC_NO) AS INVC_NO
+                    FROM SAL_SWINVC_TB
+                   WHERE INVC_CORP_NO = #{ndmsCorpNo}
+                     AND INVC_CMPN_NO = #{ndmsCmpnNo}
+                     AND INVC_DLR_NO = #{dlrNo}
+                     AND INVC_ENQRY_NO = #{eqryNo}
+                   GROUP BY INVC_CORP_NO, INVC_CMPN_NO, INVC_DLR_NO, INVC_BKNG_NO, INVC_ENQRY_NO
+                ) D2
+		  WHERE  1 = 1
+           AND A.EQRY_CMPN_NO = B.EQCR_CMPN_NO
+           AND A.EQRY_CORP_NO = B.EQCR_CORP_NO
+           AND A.EQRY_DLR_NO = B.EQCR_DLR_NO
+           AND A.EQRY_ENQRY_NO = B.EQCR_ENQRY_NO
+           AND B.EQCR_CMPN_NO = B2.EQCR_CMPN_NO
+           AND B.EQCR_CORP_NO = B2.EQCR_CORP_NO
+           AND B.EQCR_DLR_NO = B2.EQCR_DLR_NO
+           AND B.EQCR_ENQRY_NO = B2.EQCR_ENQRY_NO
+           AND B.EQCR_SEQ = B2.EQCR_SEQ
+           AND A.EQRY_DLR_NO   = C.BKNG_DLR_NO
+		   AND A.EQRY_ENQRY_NO = C.BKNG_ENQRY_NO
+		   AND A.EQRY_CORP_NO  = C.BKNG_CORP_NO
+		   AND A.EQRY_CMPN_NO  = C.BKNG_CMPN_NO
+           AND C.BKNG_CORP_NO  = D.INVC_CORP_NO
+		   AND C.BKNG_CMPN_NO  = D.INVC_CMPN_NO
+		   AND C.BKNG_DLR_NO   = D.INVC_DLR_NO
+		   AND C.BKNG_NO       = D.INVC_BKNG_NO
+		   AND C.BKNG_ENQRY_NO = D.INVC_ENQRY_NO
+           AND D.INVC_DLR_NO = D2.INVC_DLR_NO
+	       AND D.INVC_NO = D2.INVC_NO
+	       AND D.INVC_CORP_NO = D2.INVC_CORP_NO
+	       AND D.INVC_CMPN_NO = D2.INVC_CMPN_NO
+		   AND A.EQRY_DLR_NO    = #{dlrNo}
+		   AND A.EQRY_ENQRY_NO  = #{eqryNo}
+		   AND A.EQRY_CORP_NO   = #{ndmsCorpNo}
+		   AND A.EQRY_CMPN_NO   = #{ndmsCmpnNo}
+	</select>
+
+	<select id="selectCheckAllocation" parameterType="ndmsMap" resultType="ndmsMap">
+	/* [SALGFIFOBookingAllocationMainDAO.selectCheckAllocation] */
+	    SELECT SUM(A) AS OLD_VIN
+	         , MAX(B) AS OLD_STAT
+	         , SUM(C) AS NEW_VIN
+	         , MAX(D) AS NEW_STAT
+	         , MAX(F) AS OLD_RVDT
+	         , MAX(G) AS MODL_CODE
+	         , MAX(H) AS VRNT_CODE
+	         , MAX(I) AS EXT_COLR_CODE
+	         , MAX(J) AS INT_COLR_CODE
+	      FROM (
+	            SELECT COUNT(VHST_VIN) AS A
+	                 , MAX(VHST_STAT) AS B
+	                 , 0 AS C
+	                 , NULL AS D
+	                 , NULL AS E
+	                 , MAX(VHST_RCVE_DATE) AS F
+	                 , NULL AS G
+	                 , NULL AS H
+	                 , NULL AS I
+	                 , NULL AS J
+	              FROM SAL_SWVHST_TB
+	             WHERE VHST_DLR_NO = #{dlrNo}
+	               AND VHST_VIN = #{oldVin}
+	               AND VHST_CORP_NO = #{ndmsCorpNo}
+	               AND VHST_CMPN_NO = #{ndmsCmpnNo}
+	             UNION ALL
+	            SELECT 0
+	                 , NULL
+	                 , COUNT(VHST_VIN)
+	                 , MAX(VHST_STAT)
+	                 , NULL
+	                 , NULL
+	                 , MAX(VHST_MODEL_CODE)
+	                 , MAX(VHST_VRNT_CODE)
+	                 , MAX(VHST_COLR_CODE)
+	                 , MAX(VHST_INT_COLOR_CODE)
+	              FROM SAL_SWVHST_TB
+	             WHERE VHST_DLR_NO = #{dlrNo}
+	               AND VHST_VIN    = #{newVin}
+	               AND VHST_CORP_NO = #{ndmsCorpNo}
+	               AND VHST_CMPN_NO = #{ndmsCmpnNo}
+	            )
+	</select>
+
+	<update id="updateSaveEnqry" parameterType="ndmsMap">
+    /* [SALGFIFOBookingAllocationMainDAO.updateSaveEnqry] */
+    	UPDATE CRM_SCEQRY_TB
+		   SET EQRY_STAT = #{eqryStat}
+		    , EQRY_SR_NUM = #{eqrySrNum}
+		    , EQRY_SR_TYPE = #{eqrySrType}
+		    , EQRY_CUST_BLOCK = #{eqryCustBlock}
+		    , EQRY_UPDT_DTIME = SYSDATE
+		    , EQRY_UPDT_EMP_NO = #{updtEmpNo}
+		 WHERE  1=1
+		    AND EQRY_DLR_NO =  #{dlrNo}
+		    AND EQRY_ENQRY_NO = #{enqryNo}
+		    AND EQRY_CORP_NO = #{ndmsCorpNo}
+		    AND EQRY_CMPN_NO =  #{ndmsCmpnNo}
+    </update>
+
+</mapper>
